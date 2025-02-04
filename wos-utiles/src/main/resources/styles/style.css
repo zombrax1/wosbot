@@ -1,0 +1,23 @@
+.horizontal-tab-pane *.tab {
+	/* Determines the tab height */
+	-fx-pref-width: 40px;
+	/* Everything else is just aesthetics */
+	-FX-PADDING: 10PX;
+/* 	-FX-BACKGROUND-INSETS: 2 -1 -1 -1; */
+/* 	-FX-BORDER-WIDTH: 1 0 1 1; */
+/* 	-FX-BORDER-COLOR: RGB(55, 55, 56) BLACK BLACK BLACK; */
+}
+
+.horizontal-tab-pane *.tab:selected {
+/* 	-fx-background-color: rgb(45, 45, 46); */
+/* 	-fx-border-color: rgb(75, 125, 200) black rgb(45, 45, 46) black; */
+}
+
+.root {
+    -fx-background-radius: 0; /* Evita bordes redondeados */
+}
+
+.button, .text-field, .combo-box, .tab-pane, .list-view, .table-view {
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+}
