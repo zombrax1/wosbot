@@ -4,6 +4,7 @@ import java.util.List;
 
 import cl.camodev.wosbot.console.model.IProfileModel;
 import cl.camodev.wosbot.console.model.impl.ProfileModel;
+import cl.camodev.wosbot.ot.DTOConfig;
 import cl.camodev.wosbot.ot.OTProfiles;
 
 public class LauncherActionController {
@@ -16,6 +17,10 @@ public class LauncherActionController {
 
 	public List<OTProfiles> getProfiles() {
 		return iModel.getProfiles();
+	}
+
+	public void startBot(List<DTOConfig> configs) {
+		iModel.startBot(configs);
 	}
 
 }

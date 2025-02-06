@@ -3,7 +3,8 @@ package cl.camodev.wosbot.console.view;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-import cl.camodev.wosbot.console.model.EnumTpMessageSeverity;
+import cl.camodev.wosbot.console.controller.ConsoleLogActionController;
+import cl.camodev.wosbot.console.enumerable.EnumTpMessageSeverity;
 import cl.camodev.wosbot.console.model.LogMessageAux;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -15,6 +16,8 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 
 public class ConsoleLogLayoutController {
+
+	private ConsoleLogActionController actionController;
 
 	@FXML
 	private Button buttonClearLogs;
@@ -35,10 +38,12 @@ public class ConsoleLogLayoutController {
 
 	@FXML
 	private void initialize() {
+		actionController = new ConsoleLogActionController(this);
 		logMessages = FXCollections.observableArrayList();
 		columnTimeStamp.setCellValueFactory(cellData -> cellData.getValue().timeStampProperty());
 		columnMessage.setCellValueFactory(cellData -> cellData.getValue().messageProperty());
 		tableviewLogMessages.setItems(logMessages);
+
 	}
 
 	@FXML

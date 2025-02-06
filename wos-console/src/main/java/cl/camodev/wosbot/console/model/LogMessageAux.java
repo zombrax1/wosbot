@@ -1,5 +1,6 @@
 package cl.camodev.wosbot.console.model;
 
+import cl.camodev.wosbot.console.enumerable.EnumTpMessageSeverity;
 import javafx.beans.property.SimpleStringProperty;
 
 public class LogMessageAux {

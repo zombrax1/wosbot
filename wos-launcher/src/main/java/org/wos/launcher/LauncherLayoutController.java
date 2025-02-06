@@ -1,13 +1,15 @@
 package org.wos.launcher;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.wos.launcher.controller.LauncherActionController;
 
 import cl.camodev.wosbot.city.view.CityEventsLayoutController;
-import cl.camodev.wosbot.console.model.EnumTpMessageSeverity;
+import cl.camodev.wosbot.console.enumerable.EnumTpMessageSeverity;
 import cl.camodev.wosbot.console.view.ConsoleLogLayoutController;
+import cl.camodev.wosbot.ot.DTOConfig;
 import cl.camodev.wosbot.ot.OTProfiles;
 import cl.camodev.wosbot.pets.view.PetsLayoutController;
 import cl.camodev.wosbot.shop.view.ShopLayoutController;
@@ -59,20 +61,12 @@ public class LauncherLayoutController {
 		consoleLogLayoutController = new ConsoleLogLayoutController();
 		addTab("ConsoleLogLayout", "Logs", consoleLogLayoutController);
 
+		consoleLogLayoutController.appendMessage(EnumTpMessageSeverity.INFO, "Loading Modules");
 		shopLayoutController = new ShopLayoutController();
 		addTab("ShopLayoutLayout", "Shop", shopLayoutController);
 
 		petsLayoutController = new PetsLayoutController();
 		addTab("PetsLayout", "Pets", petsLayoutController);
-
-		cityEventsLayoutController = new CityEventsLayoutController();
-		addTab("CityEventsLayout", "City Events", cityEventsLayoutController);
-
-		cityEventsLayoutController = new CityEventsLayoutController();
-		addTab("CityEventsLayout", "Gathering Events", cityEventsLayoutController);
-
-		cityEventsLayoutController = new CityEventsLayoutController();
-		addTab("CityEventsLayout", "Training", cityEventsLayoutController);
 
 	}
 
@@ -98,20 +92,29 @@ public class LauncherLayoutController {
 
 	@FXML
 	void handleButtonStartStop(ActionEvent event) {
+		List<DTOConfig> configs = new ArrayList<DTOConfig>();
+
+		DTOConfig dtoConfig = new DTOConfig();
+		dtoConfig.setProfileName("Vici");
+		dtoConfig.setEmulatorNumber(0);
+		dtoConfig.setNomadicMerchant(true);
+		dtoConfig.setNomadicMerchantVipPoints(true);
+		dtoConfig.setMysteryShopFreePackage(true);
+		configs.add(dtoConfig);
+
+		actionController.startBot(configs);
 		try {
-			consoleLogLayoutController.appendMessage(EnumTpMessageSeverity.INFO, "Loading UI");
-			Thread.sleep(30);
-			consoleLogLayoutController.appendMessage(EnumTpMessageSeverity.INFO, "Loading Modules");
-			Thread.sleep(25);
-			consoleLogLayoutController.appendMessage(EnumTpMessageSeverity.INFO, "Loading Profiles");
-			Thread.sleep(25);
-			consoleLogLayoutController.appendMessage(EnumTpMessageSeverity.INFO, "Version 1.0");
-			consoleLogLayoutController.appendMessage(EnumTpMessageSeverity.INFO, "Ready to Start");
-			
+//			actionController.startBot();
+//
+//			Thread.sleep(25);
+//			consoleLogLayoutController.appendMessage(EnumTpMessageSeverity.INFO, "Loading Profiles");
+//			Thread.sleep(25);
+//			consoleLogLayoutController.appendMessage(EnumTpMessageSeverity.INFO, "Version 1.0");
+//			consoleLogLayoutController.appendMessage(EnumTpMessageSeverity.INFO, "Ready to Start");
+
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
-		
 
 	}
 
