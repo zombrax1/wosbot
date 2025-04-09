@@ -1,0 +1,40 @@
+name: Maven Build & Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      # Cambiamos el directorio de trabajo a "wos-hmi"
+      - name: Build with Maven in wos-hmi
+        working-directory: wos-hmi
+        run: mvn clean package
+
+      # Listamos el contenido del directorio "target" dentro de "wos-hmi"
+      - name: List generated files
+        working-directory: wos-hmi
+        run: ls -R target/
+
+      # Subir el ZIP a GitHub Release desde la carpeta "wos-hmi/target"
+      - name: Upload ZIP to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: wos-hmi/target/wos-bot-*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
