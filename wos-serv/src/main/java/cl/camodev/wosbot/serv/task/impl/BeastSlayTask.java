@@ -187,7 +187,7 @@ public class BeastSlayTask extends DelayedTask {
 							System.out.println("Bestia atacada, finalizará en " + (totalSeconds * 2) + " segundos.");
 
 						} catch (Exception e) {
-							System.out.println("Error al obtener información de la bestia.");
+							System.out.println("Error getting beast information.");
 						}
 					}
 				} else {
@@ -206,7 +206,7 @@ public class BeastSlayTask extends DelayedTask {
 			throw new IllegalArgumentException("El texto OCR no puede ser nulo o vacío.");
 		}
 
-		// Normalizar el texto OCR (reemplazo de posibles errores comunes)
+		// Normalize OCR text (replace common errors)
 		String normalizedText = ocrText.replaceAll("[oO]", "0") // Reemplazar 'o' o 'O' por '0'
 				.replaceAll("[^0-9/]", "") // Eliminar caracteres que no sean números o '/'
 				.trim(); // Eliminar espacios en los extremos

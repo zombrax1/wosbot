@@ -107,38 +107,38 @@ public class ServScheduler {
 				// obtain current task schedules
 				Map<Integer, DTODailyTaskStatus> taskSchedules = iDailyTaskRepository.findDailyTasksStatusByProfile(profile.getId());
 
-				// Enqueue tasks based on profile configuration
-				taskMappings.forEach((configKey, suppliers) -> {
-					if (profile.getConfig(configKey, Boolean.class)) {
-						for (Supplier<DelayedTask> sup : suppliers) {
-							DelayedTask task = sup.get();
-
-							// Construir estado y encolar
+				// schedule tasks based on profile configuration
+				taskMappings.forEach((key, taskSuppliers) -> {
+					if (profile.getConfig(key, Boolean.class)) {
+						for (Supplier<DelayedTask> taskSupplier : taskSuppliers) {
+							DelayedTask task = taskSupplier.get();
 							DTOTaskState taskState = new DTOTaskState();
 							taskState.setProfileId(profile.getId());
 							taskState.setTaskId(task.getTpTask().getId());
 							taskState.setExecuting(false);
 							taskState.setScheduled(true);
 
-							DTODailyTaskStatus status = taskSchedules.get(task.getTpDailyTaskId());
-							if (status != null) {
-								LocalDateTime next = status.getNextSchedule();
-								task.reschedule(next);
-								taskState.setLastExecutionTime(status.getLastExecution());
-								taskState.setNextExecutionTime(next);
-								ServLogs.getServices().appendLog(EnumTpMessageSeverity.INFO, task.getTaskName(), profile.getName(), "Next Execution: " + next.format(fmt));
+							if (taskSchedules.containsKey(task.getTpDailyTaskId())) {
+								DTODailyTaskStatus taskStatus = taskSchedules.get(task.getTpDailyTaskId());
+								LocalDateTime nextSchedule = taskStatus.getNextSchedule();
+								task.reschedule(nextSchedule);
+								taskState.setLastExecutionTime(taskStatus.getLastExecution());
+
+								ServLogs.getServices().appendLog(EnumTpMessageSeverity.INFO, task.getTaskName(), profile.getName(), "Next Execution: " + nextSchedule.format(fmt));
+
 							} else {
-								task.reschedule(LocalDateTime.now());
-								taskState.setLastExecutionTime(null);
-								taskState.setNextExecutionTime(task.getScheduled());
 								ServLogs.getServices().appendLog(EnumTpMessageSeverity.INFO, task.getTaskName(), profile.getName(), "Task not completed, scheduling for today");
+								task.reschedule(LocalDateTime.now());
+								taskState.setLastExecutionTime(null); // No previous execution
 							}
 
+							taskState.setNextExecutionTime(task.getScheduled());
 							ServTaskManager.getInstance().setTaskState(profile.getId(), taskState);
 							queue.addTask(task);
 						}
 					}
 				});
+
 			});
 
 			queueManager.startQueues();
@@ -224,20 +224,45 @@ public class ServScheduler {
 	}
 
 	public void saveEmulatorPath(String enumConfigurationKey, String filePath) {
-		List<Config> configs = iConfigRepository.getGlobalConfigs();
+		int maxRetries = 3;
+		int retryCount = 0;
+		
+		while (retryCount < maxRetries) {
+			try {
+				List<Config> configs = iConfigRepository.getGlobalConfigs();
 
-		Config config = configs.stream().filter(c -> c.getKey().equals(enumConfigurationKey)).findFirst().orElse(null);
+				Config config = configs.stream().filter(c -> c.getKey().equals(enumConfigurationKey)).findFirst().orElse(null);
 
-		if (config == null) {
-			TpConfig tpConfig = iConfigRepository.getTpConfig(TpConfigEnum.GLOBAL_CONFIG);
-			config = new Config();
-			config.setKey(enumConfigurationKey);
-			config.setValor(filePath);
-			config.setTpConfig(tpConfig);
-			iConfigRepository.addConfig(config);
-		} else {
-			config.setValor(filePath);
-			iConfigRepository.saveConfig(config);
+				if (config == null) {
+					TpConfig tpConfig = iConfigRepository.getTpConfig(TpConfigEnum.GLOBAL_CONFIG);
+					config = new Config();
+					config.setKey(enumConfigurationKey);
+					config.setValor(filePath);
+					config.setTpConfig(tpConfig);
+					iConfigRepository.addConfig(config);
+				} else {
+					config.setValor(filePath);
+					iConfigRepository.saveConfig(config);
+				}
+				
+				// Success, break out of retry loop
+				break;
+				
+			} catch (Exception e) {
+				retryCount++;
+				if (retryCount >= maxRetries) {
+					System.err.println("Failed to save emulator path after " + maxRetries + " retries: " + e.getMessage());
+					// Don't throw exception, just log and continue
+					return;
+				}
+				// Wait before retrying
+				try {
+					Thread.sleep(1000 * retryCount); // Exponential backoff
+				} catch (InterruptedException ie) {
+					Thread.currentThread().interrupt();
+					return;
+				}
+			}
 		}
 	}
 

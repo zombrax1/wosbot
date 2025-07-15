@@ -43,7 +43,30 @@ public class ServProfiles implements IServProfile {
 
 	@Override
 	public List<DTOProfiles> getProfiles() {
-		return iProfileRepository.getProfiles();
+		int maxRetries = 3;
+		int retryCount = 0;
+		
+		while (retryCount < maxRetries) {
+			try {
+				return iProfileRepository.getProfiles();
+			} catch (Exception e) {
+				retryCount++;
+				if (retryCount >= maxRetries) {
+					System.err.println("Failed to get profiles after " + maxRetries + " retries: " + e.getMessage());
+					// Return empty list instead of null to prevent NPE
+					return new ArrayList<>();
+				}
+				// Wait before retrying
+				try {
+					Thread.sleep(1000 * retryCount); // Exponential backoff
+				} catch (InterruptedException ie) {
+					Thread.currentThread().interrupt();
+					return new ArrayList<>();
+				}
+			}
+		}
+		
+		return new ArrayList<>();
 	}
 
 	public HashMap<EnumConfigurationKey, String> getGlobalSettings() {

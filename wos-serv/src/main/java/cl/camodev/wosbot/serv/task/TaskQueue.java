@@ -273,7 +273,7 @@ public class TaskQueue {
 		// Eliminar todas las tareas pendientes en la cola
 		taskQueue.clear();
 		ServProfiles.getServices().notifyProfileStatusChange(new DTOProfileStatus(profile.getId(), "NOT RUNNING "));
-		System.out.println("TaskQueue detenida de inmediato.");
+		System.out.println("TaskQueue stopped immediately.");
 	}
 
 	/**

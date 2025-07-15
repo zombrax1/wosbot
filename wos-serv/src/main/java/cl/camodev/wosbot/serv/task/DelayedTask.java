@@ -38,10 +38,10 @@ public abstract class DelayedTask implements Runnable, Delayed, Comparable<Delay
 
 	public DelayedTask(DTOProfiles profile, TpDailyTaskEnum tpTask) {
 		this.profile = profile;
-		this.taskName = tpTask.getName();
-		this.scheduledTime = LocalDateTime.now();
-		this.EMULATOR_NUMBER = profile.getEmulatorNumber().toString();
 		this.tpTask = tpTask;
+		this.taskName = (tpTask != null) ? tpTask.getName() : "UnknownTask";
+		this.scheduledTime = LocalDateTime.now();
+		this.EMULATOR_NUMBER = (profile != null && profile.getEmulatorNumber() != null) ? profile.getEmulatorNumber().toString() : "";
 	}
 
 	@Override

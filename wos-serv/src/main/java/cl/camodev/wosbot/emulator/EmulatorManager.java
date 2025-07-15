@@ -50,7 +50,7 @@ public class EmulatorManager {
 			throw new IllegalStateException("No emulator configuration found. Ensure initialization is completed.");
 		}
 
-		// Obtener el emulador activo guardado
+		// Get the saved active emulator
 		String savedActiveEmulator = globalConfig.get(EnumConfigurationKey.CURRENT_EMULATOR_STRING.name());
 		if (savedActiveEmulator == null) {
 			throw new IllegalStateException("No active emulator set. Ensure an emulator is selected.");
@@ -96,7 +96,7 @@ public class EmulatorManager {
 	}
 
 	/**
-	 * Captura una pantalla del emulador.
+	 * Capture a screenshot from the emulator.
 	 */
 	public byte[] captureScreenshotViaADB(String emulatorNumber) {
 		checkEmulatorInitialized();
@@ -137,7 +137,7 @@ public class EmulatorManager {
 	}
 
 	/**
-	 * Verifica si una aplicación está instalada en el emulador.
+	 * Check if an app is installed on the emulator.
 	 */
 	public boolean isWhiteoutSurvivalInstalled(String emulatorNumber) {
 		checkEmulatorInitialized();
@@ -145,7 +145,7 @@ public class EmulatorManager {
 	}
 
 	/**
-	 * Presiona el botón de retroceso en el emulador.
+	 * Press the back button on the emulator.
 	 */
 	public void tapBackButton(String emulatorNumber) {
 		checkEmulatorInitialized();
@@ -160,12 +160,32 @@ public class EmulatorManager {
 		return emulator.ocrRegionText(emulatorNumber, p1, p2);
 	}
 
+	private boolean isValidROI(int x, int y, int width, int height, int imageWidth, int imageHeight) {
+		return x >= 0 && y >= 0 && width > 0 && height > 0 &&
+				x + width <= imageWidth && y + height <= imageHeight;
+	}
+
 	/**
-	 * Busca una imagen en la pantalla capturada del emulador.
+	 * Search for an image in the emulator screenshot.
 	 */
 	public DTOImageSearchResult searchTemplate(String emulatorNumber, String templatePath, int x, int y, int width, int height, double threshold) {
 		checkEmulatorInitialized();
 		byte[] screenshot = captureScreenshotViaADB(emulatorNumber);
+		if (screenshot == null || screenshot.length == 0) {
+			System.err.println("Screenshot capture failed, aborting template search.");
+			return new DTOImageSearchResult(false, null, 0.0);
+		}
+		// Validate ROI against screenshot dimensions
+		org.opencv.core.MatOfByte matOfByte = new org.opencv.core.MatOfByte(screenshot);
+		org.opencv.core.Mat imagenPrincipal = org.opencv.imgcodecs.Imgcodecs.imdecode(matOfByte, org.opencv.imgcodecs.Imgcodecs.IMREAD_COLOR);
+		if (imagenPrincipal.empty()) {
+			System.err.println("Error while loading image from byte array.");
+			return new DTOImageSearchResult(false, null, 0.0);
+		}
+		if (!isValidROI(x, y, width, height, imagenPrincipal.cols(), imagenPrincipal.rows())) {
+			System.err.println("Defined ROI is out of bounds. Aborting template search.");
+			return new DTOImageSearchResult(false, null, 0.0);
+		}
 		return ImageSearchUtil.buscarTemplate(screenshot, templatePath, x, y, width, height, threshold);
 	}
 
@@ -175,7 +195,7 @@ public class EmulatorManager {
 	}
 
 	/**
-	 * Cierra el emulador.
+	 * Close the emulator.
 	 */
 	public void closeEmulator(String emulatorNumber) {
 		checkEmulatorInitialized();

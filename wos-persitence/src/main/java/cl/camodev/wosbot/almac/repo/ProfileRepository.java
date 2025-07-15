@@ -33,7 +33,7 @@ public class ProfileRepository implements IProfileRepository {
 	public List<DTOProfiles> getProfiles() {
 		String queryProfiles = "SELECT new cl.camodev.wosbot.ot.DTOProfiles(p.id, p.name, p.emulatorNumber, p.enabled) FROM Profile p";
 
-		// Obtener perfiles usando getQueryResults
+		// Run the query using getQueryResults()
 		List<DTOProfiles> profiles = persistence.getQueryResults(queryProfiles, DTOProfiles.class, null);
 
 		if (profiles == null || profiles.isEmpty()) {

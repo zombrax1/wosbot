@@ -1,0 +1,19 @@
+{
+  "name": "click-recorder",
+  "version": "1.0.0",
+  "description": "Simple JavaScript tool to record clicks and take screenshots via ADB",
+  "main": "click-recorder.js",
+  "keywords": [
+    "adb",
+    "android",
+    "recording",
+    "screenshots",
+    "automation"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
+} 

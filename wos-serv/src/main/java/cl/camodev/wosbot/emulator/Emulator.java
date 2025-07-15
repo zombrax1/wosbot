@@ -53,10 +53,10 @@ public abstract class Emulator {
 				int exitCode = process.waitFor();
 
 				if (exitCode == 0) {
-					System.out.println("✅ Comando ejecutado con éxito: " + command);
+					System.out.println("✅ Command executed successfully: " + command);
 					return;
 				} else {
-					System.err.println("❌ Error ejecutando el comando, código de salida: " + exitCode);
+					System.err.println("❌ Error executing command, exit code: " + exitCode);
 					restartAdb();
 					Thread.sleep(retryDelay);
 				}
@@ -215,15 +215,15 @@ public abstract class Emulator {
 	public void restartAdb() {
 
 		try {
-			System.out.println("🔄 Reiniciando ADB del emulador...");
+			System.out.println("🔄 Restarting emulator ADB...");
 			String adbPath = consolePath + File.separator + "adb.exe";
-			// Ejecutar "adb kill-server"
+			// Execute ADB command
 			ProcessBuilder killServer = new ProcessBuilder(adbPath, "kill-server");
 			killServer.redirectErrorStream(true);
 			Process killProcess = killServer.start();
 			killProcess.waitFor();
 
-			// Ejecutar "adb start-server"
+			// Execute ADB command
 			ProcessBuilder startServer = new ProcessBuilder(adbPath, "start-server");
 			startServer.redirectErrorStream(true);
 			Process startProcess = startServer.start();
@@ -237,7 +237,7 @@ public abstract class Emulator {
 			System.out.println("✅ ADB reiniciado con éxito.");
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
-			System.err.println("❌ Error al reiniciar el ADB interno de MuMu.");
+			System.err.println("❌ Error restarting MuMu internal ADB.");
 		}
 
 	}
@@ -251,21 +251,29 @@ public abstract class Emulator {
 			try {
 				return imageBytes;
 			} catch (IllegalArgumentException e) {
-				System.err.println("❌ Error al decodificar la imagen.");
+				System.err.println("❌ Error decoding image.");
 			}
 		}
 		return null;
 	}
 
 	public String ocrRegionText(String emulatorNumber, DTOPoint p1, DTOPoint p2) throws IOException, TesseractException {
-		BufferedImage image = ImageIO.read(new ByteArrayInputStream(captureScreenshot(emulatorNumber)));
-		if (image == null)
+		byte[] screenshotBytes = captureScreenshot(emulatorNumber);
+		if (screenshotBytes == null || screenshotBytes.length == 0) {
 			throw new IOException("No se pudo capturar la imagen.");
+		}
+		BufferedImage image = ImageIO.read(new ByteArrayInputStream(screenshotBytes));
+		if (image == null)
+			throw new IOException("No se pudo decodificar la imagen.");
 
 		int x = (int) Math.min(p1.getX(), p2.getX());
 		int y = (int) Math.min(p1.getY(), p2.getY());
 		int width = (int) Math.abs(p1.getX() - p2.getX());
 		int height = (int) Math.abs(p1.getY() - p2.getY());
+
+		if (x < 0 || y < 0 || width <= 0 || height <= 0 || x + width > image.getWidth() || y + height > image.getHeight()) {
+			throw new IOException("La región especificada se sale de los límites de la imagen.");
+		}
 
 		BufferedImage subImage = image.getSubimage(x, y, width, height);
 		Tesseract tesseract = new Tesseract();
@@ -346,7 +354,7 @@ public abstract class Emulator {
 	public void pressBackButton(String emulatorNumber) {
 		String command = "shell input keyevent KEYCODE_BACK";
 		executeAdbCommand(emulatorNumber, command);
-		System.out.println("🔙 Botón de retroceso presionado en el emulador " + emulatorNumber);
+		System.out.println("🔙 Back button pressed on emulator " + emulatorNumber);
 	}
 
 	// 🔹 Método para verificar si una app está instalada
@@ -359,6 +367,6 @@ public abstract class Emulator {
 	public void launchApp(String emulatorNumber, String packageName) {
 		String command = "shell monkey -p " + packageName + " -c android.intent.category.LAUNCHER 1";
 		executeAdbCommand(emulatorNumber, command);
-		System.out.println("📱 Aplicación " + packageName + " iniciada en el emulador " + emulatorNumber);
+		System.out.println("📱 Application " + packageName + " launched on emulator " + emulatorNumber);
 	}
 }

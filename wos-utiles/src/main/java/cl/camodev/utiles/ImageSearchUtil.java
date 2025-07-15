@@ -150,7 +150,7 @@ public class ImageSearchUtil {
 			Mat template = Imgcodecs.imdecode(templateMatOfByte, Imgcodecs.IMREAD_COLOR);
 
 			if (template.empty()) {
-				System.err.println("Error al decodificar la plantilla.");
+				System.err.println("Error decoding template.");
 				return new DTOImageSearchResult(false, null, 0.0);
 			}
 

@@ -1,0 +1,25 @@
+----- created by AnkuLua snap and play script ------
+immersive = true
+setImmersiveMode(immersive)
+genVersion = "9.0.7-pro2"
+setAutoGameArea = true
+pcall (autoGameArea, setAutoGameArea)
+scriptDimension = 720
+Settings:setScriptDimension(true, scriptDimension)
+Settings:setCompareDimension(true, scriptDimension)
+local index = 1
+touchList = {}
+waitList = {}
+
+------ 1 -----
+touchList[index] = {target =  "alliance.png", region = Region(455, 1387, 152, 152), id = "alliance", action = 'click'}
+index = index + 1
+
+------ 2 -----
+touchList[index] = {target =  "close.png", region = Region(588, 346, 152, 152), id = "close", action = 'click'}
+index = index + 1
+
+------ 3 -----
+touchList[index] = {target =  "notice.png", region = Region(470, 428, 152, 152), id = "notice", action = 'click'}
+index = index + 1
+

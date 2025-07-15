@@ -4,7 +4,15 @@ public enum EnumConfigurationKey {
 
     //@formatter:off
 	BOOL_DEBUG("false", Boolean.class ),
+	DISCORD_ENABLED_BOOL("false", Boolean.class),
 	DISCORD_TOKEN_STRING("", String.class),
+	DISCORD_CHANNEL_ID_STRING("", String.class),
+	DISCORD_ALLIANCE_NOTIFICATIONS_BOOL("false", Boolean.class),
+	DISCORD_CHEST_NOTIFICATIONS_BOOL("false", Boolean.class),
+	DISCORD_TECH_NOTIFICATIONS_BOOL("false", Boolean.class),
+	DISCORD_HELP_NOTIFICATIONS_BOOL("false", Boolean.class),
+	DISCORD_TRIUMPH_NOTIFICATIONS_BOOL("false", Boolean.class),
+	DISCORD_SCROLL_INTERVAL_INT("30", Integer.class),
 	MUMU_PATH_STRING("", String.class),
 	MEMU_PATH_STRING("", String.class),
 	LDPLAYER_PATH_STRING("", String.class),

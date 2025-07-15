@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.Color?>
+<?import javafx.scene.shape.Circle?>
+
+<VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      
+      <!-- Connection Status Section -->
+      <TitledPane text="Connection Status" expanded="true" VBox.vgrow="NEVER">
+         <content>
+            <VBox spacing="10">
+               <HBox spacing="10" alignment="CENTER_LEFT">
+                  <Circle fx:id="circleConnectionStatus" radius="8" fill="RED"/>
+                  <Label fx:id="labelConnectionStatus" text="Disconnected" style="-fx-text-fill: red;"/>
+               </HBox>
+               
+               <GridPane hgap="10" vgap="5">
+                  <columnConstraints>
+                     <ColumnConstraints hgrow="SOMETIMES" minWidth="100.0" prefWidth="150.0"/>
+                     <ColumnConstraints hgrow="ALWAYS" minWidth="200.0" prefWidth="300.0"/>
+                     <ColumnConstraints hgrow="SOMETIMES" minWidth="100.0" prefWidth="120.0"/>
+                  </columnConstraints>
+                                          <rowConstraints>
+                           <RowConstraints minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                           <RowConstraints minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                           <RowConstraints minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                        </rowConstraints>
+                  
+                                          <Label text="Bot Token:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                        <TextField fx:id="textfieldDiscordToken" promptText="Enter Discord Bot Token" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                        <Button fx:id="buttonTestConnection" text="Test Connection" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                        
+                        <Label text="Channel ID:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                        <TextField fx:id="textfieldDiscordChannelId" promptText="Enter Discord Channel ID" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                        <Button fx:id="buttonSendTestMessage" text="Send Test Message" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                        
+                        <Label text="" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                        <Button fx:id="buttonSaveSettings" text="Save Settings" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                        <Label text="" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+               </GridPane>
+            </VBox>
+         </content>
+      </TitledPane>
+      
+      <!-- General Settings Section -->
+      <TitledPane text="General Settings" expanded="true" VBox.vgrow="NEVER">
+         <content>
+            <VBox spacing="10">
+               <CheckBox fx:id="checkBoxDiscordEnabled" mnemonicParsing="false" text="Enable Discord Notifications"/>
+               
+               <GridPane hgap="10" vgap="5">
+                  <columnConstraints>
+                     <ColumnConstraints hgrow="SOMETIMES" minWidth="100.0" prefWidth="150.0"/>
+                     <ColumnConstraints hgrow="ALWAYS" minWidth="200.0" prefWidth="300.0"/>
+                  </columnConstraints>
+                  <rowConstraints>
+                     <RowConstraints minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                  </rowConstraints>
+                  
+                  <Label text="Check Interval (minutes):" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                  <TextField fx:id="textfieldScrollInterval" promptText="30" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+               </GridPane>
+            </VBox>
+         </content>
+      </TitledPane>
+      
+   </children>
+   <padding>
+      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+   </padding>
+</VBox> 

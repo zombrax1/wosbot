@@ -23,6 +23,9 @@ public class LDPlayerEmulator extends Emulator {
 
 	private AndroidDebugBridge bridge = null;
 
+	private static final int MAX_RETRIES = 10;
+	private static final int RETRY_DELAY_MS = 3000;
+
 	public LDPlayerEmulator(String consolePath) {
 		super(consolePath);
 		if (bridge == null) {
@@ -32,6 +35,39 @@ public class LDPlayerEmulator extends Emulator {
 			bridge = AndroidDebugBridge.createBridge(consolePath + File.separator + "adb.exe", false, 5000, TimeUnit.MILLISECONDS);
 		}
 
+	}
+
+	private boolean ensureBridgeInitialized() {
+		if (bridge == null) {
+			try {
+				AndroidDebugBridge.disconnectBridge(5000, TimeUnit.MILLISECONDS);
+				AndroidDebugBridge.terminate();
+				AndroidDebugBridge.init(false);
+				bridge = AndroidDebugBridge.createBridge(consolePath + File.separator + "adb.exe", false, 5000, TimeUnit.MILLISECONDS);
+			} catch (Exception e) {
+				System.err.println("Failed to initialize ADB bridge: " + e.getMessage());
+				return false;
+			}
+		}
+		return bridge != null;
+	}
+
+	private IDevice getTargetDevice(String emulatorNumber) throws InterruptedException {
+		if (!ensureBridgeInitialized()) return null;
+		int count = 0;
+		while ((bridge == null || !bridge.hasInitialDeviceList()) && count < 10) {
+			Thread.sleep(500);
+			count++;
+		}
+		IDevice[] devices = bridge != null ? bridge.getDevices() : new IDevice[0];
+		int targetPort = 5554 + (Integer.parseInt(emulatorNumber) * 2);
+		String targetSerial = "emulator-" + targetPort;
+		for (IDevice device : devices) {
+			if (device.getSerialNumber().equals(targetSerial)) {
+				return device;
+			}
+		}
+		return null;
 	}
 
 	@Override
@@ -46,214 +82,115 @@ public class LDPlayerEmulator extends Emulator {
 
 	@Override
 	public boolean tapAtRandomPoint(String emulatorNumber, DTOPoint point1, DTOPoint point2, int tapCount, int delayMs) {
-		int maxRetries = 10;
-		int retryDelay = 3000; // ms para reintentar ADB
 		Random random = new Random();
-
-		for (int attempt = 1; attempt <= maxRetries; attempt++) {
+		for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
 			try {
-
-				// 2) Esperar a que ADB cargue la lista de dispositivos
-				int count = 0;
-				while ((bridge == null || !bridge.hasInitialDeviceList()) && count < 10) {
-					Thread.sleep(500);
-					count++;
-				}
-
-				// 3) Obtener dispositivos y buscar el target
-				IDevice[] devices = bridge.getDevices();
-				int targetPort = 5554 + (Integer.parseInt(emulatorNumber) * 2);
-				String targetSerial = "emulator-" + targetPort;
-
-				IDevice targetDevice = null;
-				for (IDevice device : devices) {
-					if (device.getSerialNumber().equals(targetSerial)) {
-						targetDevice = device;
-						break;
-					}
-				}
-
+				IDevice targetDevice = getTargetDevice(emulatorNumber);
 				if (targetDevice == null) {
-					System.out.println("❌ No se encontró el dispositivo con serial: " + targetSerial);
+					System.out.println("❌ Device with serial not found for emulator: " + emulatorNumber);
 					restartAdb();
-					Thread.sleep(retryDelay);
+					Thread.sleep(RETRY_DELAY_MS);
 					continue;
 				}
-
-				// 4) Para cada uno de los tapCount taps:
 				int minX = Math.min(point1.getX(), point2.getX());
 				int maxX = Math.max(point1.getX(), point2.getX());
 				int minY = Math.min(point1.getY(), point2.getY());
 				int maxY = Math.max(point1.getY(), point2.getY());
-
 				for (int i = 0; i < tapCount; i++) {
 					int x = minX + random.nextInt(maxX - minX + 1);
 					int y = minY + random.nextInt(maxY - minY + 1);
-
 					String tapCommand = String.format("input tap %d %d", x, y);
 					targetDevice.executeShellCommand(tapCommand, new NullOutputReceiver());
-					System.out.println("✅ Tap " + (i + 1) + "/" + tapCount + " enviado a (" + x + "," + y + ") en " + targetSerial);
-
-					// Esperar entre taps
+					System.out.println("✅ Tap " + (i + 1) + "/" + tapCount + " sent to (" + x + "," + y + ") on " + targetDevice.getSerialNumber());
 					if (i < tapCount - 1) {
 						Thread.sleep(delayMs);
 					}
 				}
-
 				return true;
-
 			} catch (Exception e) {
 				e.printStackTrace();
-				// Reiniciar ADB y esperar antes de reintentar
 				try {
 					restartAdb();
-					Thread.sleep(retryDelay);
+					Thread.sleep(RETRY_DELAY_MS);
 				} catch (InterruptedException ex) {
 					ex.printStackTrace();
 				}
 			}
 		}
-
-		System.err.println("❌ No se pudo enviar los taps después de " + maxRetries + " intentos.");
+		System.err.println("❌ Could not send tap after " + MAX_RETRIES + " attempts.");
 		return false;
 	}
 
 	@Override
 	public boolean tapAtRandomPoint(String emulatorNumber, DTOPoint point1, DTOPoint point2) {
-		int maxRetries = 10;
-		int retryDelay = 3000; // ms
 		Random random = new Random();
-
-		for (int attempt = 1; attempt <= maxRetries; attempt++) {
+		for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
 			try {
-
-				// 2) Esperar a que ADB cargue la lista de dispositivos
-				int count = 0;
-				while ((bridge == null || !bridge.hasInitialDeviceList()) && count < 10) {
-					Thread.sleep(500);
-					count++;
-				}
-
-				// 3) Obtener dispositivos y buscar el target
-				IDevice[] devices = bridge.getDevices();
-				int targetPort = 5554 + (Integer.parseInt(emulatorNumber) * 2);
-				String targetSerial = "emulator-" + targetPort;
-
-				IDevice targetDevice = null;
-				for (IDevice device : devices) {
-					if (device.getSerialNumber().equals(targetSerial)) {
-						targetDevice = device;
-						break;
-					}
-				}
-
+				IDevice targetDevice = getTargetDevice(emulatorNumber);
 				if (targetDevice == null) {
-					System.out.println("❌ No se encontró el dispositivo con serial: " + targetSerial);
+					System.out.println("❌ Device with serial not found for emulator: " + emulatorNumber);
 					restartAdb();
-					Thread.sleep(retryDelay);
+					Thread.sleep(RETRY_DELAY_MS);
 					continue;
 				}
-
-				// 4) Calcular punto aleatorio dentro del rectángulo
 				int minX = Math.min(point1.getX(), point2.getX());
 				int maxX = Math.max(point1.getX(), point2.getX());
 				int minY = Math.min(point1.getY(), point2.getY());
 				int maxY = Math.max(point1.getY(), point2.getY());
-
 				int x = minX + random.nextInt(maxX - minX + 1);
 				int y = minY + random.nextInt(maxY - minY + 1);
-
-				// 5) Ejecutar el tap via shell
 				String tapCommand = String.format("input tap %d %d", x, y);
 				targetDevice.executeShellCommand(tapCommand, new NullOutputReceiver());
-
-				System.out.println("✅ Tap enviado a (" + x + ", " + y + ") en " + targetSerial);
+				System.out.println("✅ Tap sent to (" + x + ", " + y + ") on " + targetDevice.getSerialNumber());
 				return true;
-
 			} catch (Exception e) {
 				e.printStackTrace();
-				// En caso de fallo, reiniciar ADB y esperar antes de reintentar
 				try {
 					restartAdb();
-					Thread.sleep(retryDelay);
+					Thread.sleep(RETRY_DELAY_MS);
 				} catch (InterruptedException ex) {
 					ex.printStackTrace();
 				}
 			}
 		}
-
-		System.err.println("❌ No se pudo enviar el tap después de " + maxRetries + " intentos.");
+		System.err.println("❌ Could not send tap after " + MAX_RETRIES + " attempts.");
 		return false;
 	}
 
 	@Override
 	protected byte[] captureScreenshot(String emulatorNumber, String command) {
-		int maxRetries = 10;
-		int retryDelay = 3000;
-
-		for (int attempt = 1; attempt <= maxRetries; attempt++) {
+		for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
 			try {
-				// Inicializar ADB una sola vez
-
-				// Esperar a que ADB cargue la lista de dispositivos
-				int count = 0;
-				while ((bridge == null || !bridge.hasInitialDeviceList()) && count < 10) {
-					Thread.sleep(500);
-					count++;
-				}
-
-				IDevice[] devices = bridge.getDevices();
-
-				int targetPort = 5554 + (Integer.parseInt(emulatorNumber) * 2);
-				String targetSerial = "emulator-" + targetPort;
-
-				IDevice targetDevice = null;
-				for (IDevice device : devices) {
-					if (device.getSerialNumber().equals(targetSerial)) {
-						targetDevice = device;
-						break;
-					}
-				}
-
+				IDevice targetDevice = getTargetDevice(emulatorNumber);
 				if (targetDevice == null) {
-					System.out.println("❌ No se encontró el dispositivo con serial: " + targetSerial);
+					System.out.println("❌ Device with serial not found for emulator: " + emulatorNumber);
 					closeEmulator(emulatorNumber);
-					Thread.sleep(retryDelay * 10);
+					Thread.sleep(RETRY_DELAY_MS * 10);
 					launchEmulator(emulatorNumber);
 					continue;
 				}
-
-				// Capturar pantalla
 				RawImage rawImage = targetDevice.getScreenshot();
-
 				if (rawImage == null) {
 					System.out.println("⚠️ Captura fallida, intento " + attempt);
 					restartAdb();
-					Thread.sleep(retryDelay);
+					Thread.sleep(RETRY_DELAY_MS);
 					continue;
 				}
-
 				BufferedImage image = convertRawImageToBufferedImage(rawImage);
-
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
 				ImageIO.write(image, "png", baos);
-//				FileOutputStream fos = new FileOutputStream("screenshot.png");
-//				fos.write(baos.toByteArray());
-//				fos.close();
 				return baos.toByteArray();
-
 			} catch (Exception e) {
 				e.printStackTrace();
 				try {
 					restartAdb();
-					Thread.sleep(retryDelay);
+					Thread.sleep(RETRY_DELAY_MS);
 				} catch (InterruptedException ex) {
 					ex.printStackTrace();
 				}
 			}
 		}
-
-		System.err.println("❌ No se pudo obtener una captura después de " + maxRetries + " intentos.");
+		System.err.println("❌ Could not get a screenshot after " + MAX_RETRIES + " attempts.");
 		return null;
 	}
 
@@ -314,7 +251,7 @@ public class LDPlayerEmulator extends Emulator {
 	public void launchEmulator(String emulatorNumber) {
 		String[] command = { consolePath + File.separator + "ldconsole.exe", "launch", "--index", emulatorNumber };
 		executeCommand(command);
-		System.out.println("🚀 LDPlayer lanzado en el índice " + emulatorNumber);
+		System.out.println("🚀 LDPlayer launched at index " + emulatorNumber);
 
 	}
 
@@ -322,7 +259,7 @@ public class LDPlayerEmulator extends Emulator {
 	public void closeEmulator(String emulatorNumber) {
 		String[] command = { consolePath + File.separator + "ldconsole.exe", "quit", "--index", emulatorNumber };
 		executeCommand(command);
-		System.out.println("🛑 LDPlayer cerrado en el índice " + emulatorNumber);
+		System.out.println("🛑 LDPlayer closed at index " + emulatorNumber);
 
 	}
 

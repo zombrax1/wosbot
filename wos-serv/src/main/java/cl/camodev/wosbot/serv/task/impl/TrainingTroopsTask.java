@@ -131,7 +131,6 @@ public class TrainingTroopsTask extends DelayedTask {
             throw new IllegalArgumentException("Input does not match the expected format. Expected format: [n]d HH:mm:ss' o 'HH:mm:ss");
         }
 
-
         String daysStr = matcher.group(1);   // optional, can be null
         String timeStr = matcher.group(2);   // always present
 
@@ -141,8 +140,7 @@ public class TrainingTroopsTask extends DelayedTask {
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("H:mm:ss");
         LocalTime timePart = LocalTime.parse(timeStr, timeFormatter);
 
-
-        return LocalDateTime.now()
+        return dateTime
                 .plusDays(daysToAdd)
                 .plusHours(timePart.getHour())
                 .plusMinutes(timePart.getMinute())

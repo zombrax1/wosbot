@@ -81,10 +81,21 @@ public abstract class AbstractProfileController implements IProfileLoadListener,
 
 	private void updateProfile(TextField textField, EnumConfigurationKey configKey) {
 		String newVal = textField.getText();
+		
+		// Handle different types based on configuration key
+		if (configKey.getType().equals(String.class)) {
+			// For string values (like Discord token, channel ID)
+			profileObserver.notifyProfileChange(configKey, newVal);
+		} else if (configKey.getType().equals(Integer.class)) {
+			// For integer values (like scroll interval)
 		if (isValidPositiveInteger(newVal)) {
 			profileObserver.notifyProfileChange(configKey, Integer.valueOf(newVal));
 		} else {
 			textField.setText(configKey.getDefaultValue());
+			}
+		} else {
+			// Default to string for unknown types
+			profileObserver.notifyProfileChange(configKey, newVal);
 		}
 	}
 
@@ -110,8 +121,19 @@ public abstract class AbstractProfileController implements IProfileLoadListener,
 			});
 
 			textFieldMappings.forEach((textField, key) -> {
+				if (key.getType().equals(String.class)) {
+					// For string values (like Discord token, channel ID)
+					String value = profile.getConfig(key, String.class);
+					textField.setText(value != null ? value : key.getDefaultValue());
+				} else if (key.getType().equals(Integer.class)) {
+					// For integer values (like scroll interval)
 				Integer value = profile.getConfig(key, Integer.class);
 				textField.setText(value != null ? String.valueOf(value) : key.getDefaultValue());
+				} else {
+					// Default to string
+					String value = profile.getConfig(key, String.class);
+					textField.setText(value != null ? value : key.getDefaultValue());
+				}
 			});
 
 			radioButtonMappings.forEach((radioButton, key) -> {

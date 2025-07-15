@@ -61,8 +61,9 @@ public class AllianceHelpTask extends DelayedTask {
 	 * Obtiene el tiempo de reprogramación y actualiza la tarea.
 	 */
 	private void rescheduleTask() {
-		int offset = profile.getConfig(EnumConfigurationKey.ALLIANCE_HELP_REQUESTS_OFFSET_INT, Integer.class);
-		LocalDateTime nextExecutionTime = LocalDateTime.now().plusHours(offset);
+		int offsetMinutes = profile.getConfig(EnumConfigurationKey.ALLIANCE_HELP_REQUESTS_OFFSET_INT, Integer.class);
+		if (offsetMinutes < 1) offsetMinutes = 1; // minimum 1 minute
+		LocalDateTime nextExecutionTime = LocalDateTime.now().plusMinutes(offsetMinutes);
 		this.reschedule(nextExecutionTime);
 	}
 

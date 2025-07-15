@@ -8,6 +8,23 @@ import cl.camodev.wosbot.console.enumerable.TpDailyTaskEnum;
 import cl.camodev.wosbot.ot.DTOProfiles;
 import cl.camodev.wosbot.serv.task.impl.*;
 import cl.camodev.wosbot.serv.task.impl.GatherTask.GatherType;
+import cl.camodev.wosbot.serv.task.impl.HeroRecruitmentTask;
+import cl.camodev.wosbot.serv.task.impl.InitializeTask;
+import cl.camodev.wosbot.serv.task.impl.IntelligenceTask;
+import cl.camodev.wosbot.serv.task.impl.LifeEssenceCaringTask;
+import cl.camodev.wosbot.serv.task.impl.LifeEssenceTask;
+import cl.camodev.wosbot.serv.task.impl.MailRewardsTask;
+import cl.camodev.wosbot.serv.task.impl.NomadicMerchantTask;
+import cl.camodev.wosbot.serv.task.impl.PetAdventureChestTask;
+import cl.camodev.wosbot.serv.task.impl.PetAllianceTreasuresTask;
+import cl.camodev.wosbot.serv.task.impl.PetSkillsTask;
+import cl.camodev.wosbot.serv.task.impl.StorehouseChest;
+import cl.camodev.wosbot.serv.task.impl.TrainingTroopsTask;
+import cl.camodev.wosbot.serv.task.impl.TriumphTask;
+import cl.camodev.wosbot.serv.task.impl.UpgradeFurnaceTask;
+import cl.camodev.wosbot.serv.task.impl.VipTask;
+import cl.camodev.wosbot.serv.task.impl.WarAcademyTask;
+import cl.camodev.wosbot.serv.task.impl.DiscordNotificationTask;
 
 public class DelayedTaskRegistry {
 	private static final Map<TpDailyTaskEnum, Function<DTOProfiles, DelayedTask>> registry = new EnumMap<>(TpDailyTaskEnum.class);
@@ -46,6 +63,7 @@ public class DelayedTaskRegistry {
 		registry.put(TpDailyTaskEnum.ALLIANCE_PET_TREASURE, profile -> new PetAllianceTreasuresTask(profile, TpDailyTaskEnum.ALLIANCE_PET_TREASURE));
 		registry.put(TpDailyTaskEnum.ALLIANCE_CHESTS, profile -> new AllianceChestTask(profile, TpDailyTaskEnum.ALLIANCE_CHESTS));
 		registry.put(TpDailyTaskEnum.ALLIANCE_TRIUMPH, profile -> new TriumphTask(profile, TpDailyTaskEnum.ALLIANCE_TRIUMPH));
+		registry.put(TpDailyTaskEnum.DISCORD_NOTIFICATION, profile -> new DiscordNotificationTask(profile, TpDailyTaskEnum.DISCORD_NOTIFICATION));
 
 		// pet skills tasks
 		registry.put(TpDailyTaskEnum.PET_SKILL_STAMINA, profile -> new PetSkillsTask(profile, TpDailyTaskEnum.PET_SKILL_STAMINA, PetSkillsTask.PetSkill.STAMINA));

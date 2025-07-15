@@ -176,7 +176,8 @@ public enum EnumTemplates {
 	NOMADIC_MERCHANT_VIP("/templates/nomadicmerchant/vip.png"),
 	NOMADIC_MERCHANT_REFRESH("/templates/nomadicmerchant/refresh.png"),
 	EXPLORATION_CLAIM("/templates/exploration/claim.png"),
-	HERO_RECRUIT_CLAIM("/templates/herorecruitment/freebutton.png"),;
+	HERO_RECRUIT_CLAIM("/templates/herorecruitment/freebutton.png"),
+	DISCORD_NOTIFICATION("/templates/discord/discord.png");
 	// @formatter:on
 
     private String template;

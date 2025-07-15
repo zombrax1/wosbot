@@ -5,6 +5,7 @@ import cl.camodev.wosbot.console.enumerable.EnumConfigurationKey;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ComboBox;
 
 public class AllianceLayoutController extends AbstractProfileController {
 
@@ -26,9 +27,9 @@ public class AllianceLayoutController extends AbstractProfileController {
 		textFieldMappings.put(textfieldAutojoinQueues, EnumConfigurationKey.ALLIANCE_AUTOJOIN_QUEUES_INT);
 		textFieldMappings.put(textfieldChestOffset, EnumConfigurationKey.ALLIANCE_CHESTS_OFFSET_INT);
 		textFieldMappings.put(textfieldTechOffset, EnumConfigurationKey.ALLIANCE_TECH_OFFSET_INT);
-		textFieldMappings.put(textfieldHelpRequstOffset, EnumConfigurationKey.ALLIANCE_HELP_REQUESTS_OFFSET_INT);
 		textFieldMappings.put(textfieldTriumphOffset, EnumConfigurationKey.ALLIANCE_TRIUMPH_OFFSET_INT);
 		textFieldMappings.put(textfieldAlliesEssenceOffsett, EnumConfigurationKey.ALLIANCE_LIFE_ESSENCE_OFFSET_INT);
+		textFieldMappings.put(textfieldHelpRequstOffset, EnumConfigurationKey.ALLIANCE_HELP_REQUESTS_OFFSET_INT);
 
 		initializeChangeEvents();
 	}

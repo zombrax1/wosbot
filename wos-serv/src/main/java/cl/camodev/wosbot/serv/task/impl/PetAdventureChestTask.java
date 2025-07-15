@@ -160,7 +160,7 @@ public class PetAdventureChestTask extends DelayedTask {
 			return null; // Manejo de casos nulos o vacíos
 		}
 
-		// Normalizar texto para reducir errores OCR
+		// Normalize text to reduce OCR errors
 		String normalizedText = ocrText.replaceAll("[^a-zA-Z0-9: ]", "").trim();
 
 		// Expresión regular para buscar un número después de "attempts"

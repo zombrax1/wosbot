@@ -17,6 +17,7 @@ import cl.camodev.wosbot.city.view.CityUpgradesLayoutController;
 import cl.camodev.wosbot.console.enumerable.EnumConfigurationKey;
 import cl.camodev.wosbot.console.enumerable.EnumTpMessageSeverity;
 import cl.camodev.wosbot.console.view.ConsoleLogLayoutController;
+import cl.camodev.wosbot.discord.view.DiscordLayoutController;
 import cl.camodev.wosbot.emulator.EmulatorType;
 import cl.camodev.wosbot.emulator.view.EmuConfigLayoutController;
 import cl.camodev.wosbot.gather.view.GatherLayoutController;
@@ -244,6 +245,7 @@ public class LauncherLayoutController implements IProfileLoadListener {
 				new ModuleDefinition("AllianceLayout", "Alliance", AllianceLayoutController::new),
 				new ModuleDefinition("TrainingLayout", "Training", TrainingLayoutController::new),
 				new ModuleDefinition("PetsLayout", "Pets", PetsLayoutController::new),
+				new ModuleDefinition("DiscordLayout", "Discord", DiscordLayoutController::new),
 				new ModuleDefinition("EmuConfigLayout", "Config", EmuConfigLayoutController::new)
 				
 				);
@@ -255,7 +257,14 @@ public class LauncherLayoutController implements IProfileLoadListener {
 			// Crear el controlador con la instancia de profileObserver
 			Object controller = module.createController(profileManagerLayoutController);
 			moduleControllers.put(module.getButtonTitle(), controller);
-			addButton(module.getFxmlName(), module.getButtonTitle(), controller);
+			Button button = addButton(module.getFxmlName(), module.getButtonTitle(), controller);
+			
+			// Debug: Check if button was created successfully
+			if (button == null) {
+				consoleLogLayoutController.appendMessage(new DTOLogMessage(EnumTpMessageSeverity.ERROR, "Failed to create button for module: " + module.getButtonTitle(), "-", "-"));
+			} else {
+				consoleLogLayoutController.appendMessage(new DTOLogMessage(EnumTpMessageSeverity.INFO, "Successfully created button for module: " + module.getButtonTitle(), "-", "-"));
+			}
 
 			if (controller instanceof IProfileLoadListener) {
 				profileManagerLayoutController.addProfileLoadListener((IProfileLoadListener) controller);
@@ -294,12 +303,12 @@ public class LauncherLayoutController implements IProfileLoadListener {
 			loader.setController(controller);
 			Parent root = loader.load();
 
-			Button button = new Button(title);
-			button.setMaxWidth(Double.MAX_VALUE);
-			HBox.setHgrow(button, Priority.ALWAYS);
+					Button button = new Button(title);
+		button.setMaxWidth(Double.MAX_VALUE);
+		HBox.setHgrow(button, Priority.ALWAYS);
 
-			// Asigna la clase personalizada para esquinas cuadradas a este botón
-			button.getStyleClass().add("square-button");
+		// Asigna la clase personalizada para esquinas cuadradas a este botón
+		button.getStyleClass().add("square-button");
 
 			button.setOnAction(e -> {
 				// Limpia el contenido actual y agrega el nuevo panel
@@ -321,9 +330,19 @@ public class LauncherLayoutController implements IProfileLoadListener {
 			});
 
 			buttonsContainer.getChildren().add(button);
+			
+			// Debug: Log successful button creation
+			if (consoleLogLayoutController != null) {
+				consoleLogLayoutController.appendMessage(new DTOLogMessage(EnumTpMessageSeverity.INFO, "Button added to container: " + title + " (ID: " + button.getId() + ", container size: " + buttonsContainer.getChildren().size() + ")", "-", "-"));
+			}
+			
 			return button;
 		} catch (IOException e) {
 			e.printStackTrace();
+			// Log to UI as well
+			if (consoleLogLayoutController != null) {
+				consoleLogLayoutController.appendMessage(new DTOLogMessage(EnumTpMessageSeverity.ERROR, "Failed to load FXML for module: " + title + " (" + fxmlName + ") - " + e.getMessage(), "-", "-"));
+			}
 		}
 		return null;
 	}

@@ -154,7 +154,7 @@ public class PetSkillsTask extends DelayedTask {
 
 			return LocalDateTime.now().plusDays(days).plusHours(hours).plusMinutes(minutes).plusSeconds(seconds);
 		} catch (Exception e) {
-			throw new RuntimeException("Error al procesar el cooldown: " + input, e);
+			throw new RuntimeException("Error processing cooldown: " + input, e);
 		}
 	}
 

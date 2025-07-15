@@ -153,14 +153,14 @@ public class StorehouseChest extends DelayedTask {
 			return now;
 		}
 
-		// Corrección de errores OCR comunes
+		// Correction of common OCR errors
 		String correctedTime = ocrTime.replaceAll("[Oo]", "0").replaceAll("[lI]", "1").replaceAll("S", "5").replaceAll("[^0-9:]", "");
 
 		try {
 			LocalTime parsedTime = LocalTime.parse(correctedTime, DateTimeFormatter.ofPattern("HH:mm:ss"));
 			return now.plusHours(parsedTime.getHour()).plusMinutes(parsedTime.getMinute()).plusSeconds(parsedTime.getSecond());
 		} catch (DateTimeParseException e) {
-			System.err.println("Error al parsear la hora: " + correctedTime);
+			System.err.println("Error parsing time: " + correctedTime);
 			return now;
 		}
 	}
