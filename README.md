@@ -4,9 +4,11 @@ A powerful automation bot for Whiteout Survival, featuring multi-profile managem
 
 ## Features
 
-- **Multi-profile management**: Easily manage multiple game profiles and switch between them.
-- **Emulator support**: Works with popular Android emulators (MuMu, LDPlayer, Memu, etc.).
-- **Daily task automation**:
+- **Multi-profile management** – easily switch between multiple game profiles.
+- **Emulator support** – works with MuMu, LDPlayer, Memu and other Android emulators.
+- **OpenCV & Tesseract integration** – image recognition and OCR for in-game text.
+- **Modern JavaFX UI** – configuration screens, console log viewer and task manager.
+- **Comprehensive automation modules**:
   - Hero Recruitment
   - Nomadic Merchant
   - War Academy Shards
@@ -25,17 +27,13 @@ A powerful automation bot for Whiteout Survival, featuring multi-profile managem
   - Gathering: Meat, Wood, Stone, Iron, Speed Boost
   - Pet Skills: Stamina, Food, Treasure, Gathering
   - Training: Infantry, Lancer, Marksman
-- **Alliance automation**: Auto-join, help, tech contributions, chest claiming, and triumph rewards.
-- **Discord notifications**: Send alliance notices, help requests, chest, tech, and triumph updates to Discord channels.
-- **Shop automation**: Automate shop purchases and mystery shop checks.
-- **Pet management**: Automate pet adventures and skills.
-- **City upgrades**: Automate city building upgrades.
-- **Gathering automation**: Automate resource gathering with smart scheduling.
-- **OCR integration**: Uses Tesseract for reading in-game text (e.g., alliance notices).
-- **Modern JavaFX UI**: Intuitive interface for configuration, logs, and real-time status.
-- **Task manager**: Visualize and control all running automation tasks.
-- **Logging and error handling**: Detailed logs and robust error recovery.
-- **Persistence**: All settings and profiles are saved to a local database.
+  - Shop Automation
+  - Discord Notifications
+- **Alliance automation** – auto join, help, tech contributions and chest claiming.
+- **Pet management** – automate pet adventures and skill usage.
+- **City upgrades & gathering** – schedule resource tasks and building upgrades.
+- **Robust logging and error handling** – detailed logs and recovery on failures.
+- **Local database persistence** – profiles and settings are stored automatically.
 
 ## Installation
 
