@@ -247,10 +247,14 @@ public class TaskQueue {
 			EmulatorManager.getInstance().adquireEmulatorSlot(profile.getId(), (thread, position) -> {
 				ServProfiles.getServices().notifyProfileStatusChange(new DTOProfileStatus(profile.getId(), "Waiting for slot, position: " + position));
 			});
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+                } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        ServLogs.getServices().appendLog(
+                                        EnumTpMessageSeverity.ERROR,
+                                        "TaskQueue",
+                                        profile.getName(),
+                                        e.getMessage());
+                }
 		addTask(new InitializeTask(profile, TpDailyTaskEnum.INITIALIZE));
 	}
 

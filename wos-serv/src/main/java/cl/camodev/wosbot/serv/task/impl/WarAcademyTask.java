@@ -69,12 +69,11 @@ public class WarAcademyTask extends DelayedTask {
 
 	private int checkRemainingShards() {
 		String remainingText = "";
-		try {
-			remainingText = EmulatorManager.getInstance().ocrRegionText(EMULATOR_NUMBER, new DTOPoint(463, 452), new DTOPoint(624, 483));
-		} catch (IOException | TesseractException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+                try {
+                        remainingText = EmulatorManager.getInstance().ocrRegionText(EMULATOR_NUMBER, new DTOPoint(463, 452), new DTOPoint(624, 483));
+                } catch (IOException | TesseractException e) {
+                        servLogs.appendLog(EnumTpMessageSeverity.ERROR, taskName, profile.getName(), e.getMessage());
+                }
 		ServLogs.getServices().appendLog(EnumTpMessageSeverity.INFO, taskName, profile.getName(), remainingText);
 		return parseRemaining(remainingText);
 	}
