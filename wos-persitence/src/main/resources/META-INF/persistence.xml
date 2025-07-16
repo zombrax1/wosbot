@@ -3,8 +3,13 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd"
 	version="3.0">
-	<persistence-unit name="botPU">
-		<properties>
+        <persistence-unit name="botPU">
+                <class>cl.camodev.wosbot.almac.entity.Profile</class>
+                <class>cl.camodev.wosbot.almac.entity.Config</class>
+                <class>cl.camodev.wosbot.almac.entity.TpConfig</class>
+                <class>cl.camodev.wosbot.almac.entity.DailyTask</class>
+                <class>cl.camodev.wosbot.almac.entity.TpDailyTask</class>
+                <properties>
 
 			<property name="jakarta.persistence.jdbc.driver"
 				value="org.sqlite.JDBC" />
