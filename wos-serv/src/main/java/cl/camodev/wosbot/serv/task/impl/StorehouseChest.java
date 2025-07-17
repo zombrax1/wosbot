@@ -130,13 +130,9 @@ public class StorehouseChest extends DelayedTask {
 						this.reschedule(scheduledTime);
 						ServScheduler.getServices().updateDailyTaskStatus(profile, tpTask, scheduledTime);
 
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (TesseractException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+                                        } catch (IOException | TesseractException e) {
+                                                servLogs.appendLog(EnumTpMessageSeverity.ERROR, taskName, profile.getName(), "Error reading next reward time: " + e.getMessage());
+                                        }
 
 				}
 			}

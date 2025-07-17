@@ -27,6 +27,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -43,8 +44,9 @@ import javafx.util.Duration;
 
 public class ProfileManagerLayoutController implements IProfileChangeObserver {
 
-	private final ExecutorService profileQueueExecutor = Executors.newSingleThreadExecutor();
-	private ProfileManagerActionController profileManagerActionController;
+        private final ExecutorService profileQueueExecutor = Executors.newSingleThreadExecutor();
+        private static final String LOAD_TOOLTIP = "Load this profile and assign tasks in the Task Manager.";
+        private ProfileManagerActionController profileManagerActionController;
 	private ObservableList<ProfileAux> profiles;
 	private SortedList<ProfileAux> sortedProfiles;
 	@FXML
@@ -94,7 +96,8 @@ public class ProfileManagerLayoutController implements IProfileChangeObserver {
 					{
 						// Asignar iconos a los botones
 						btnDelete.setGraphic(loadIcon("/icons/buttons/delete.png"));
-						btnLoad.setGraphic(loadIcon("/icons/buttons/load.png"));
+                                                btnLoad.setGraphic(loadIcon("/icons/buttons/load.png"));
+                                                btnLoad.setTooltip(new Tooltip(LOAD_TOOLTIP));
 //						btnSave.setGraphic(loadIcon("/icons/buttons/save.png"));
 
 						// Configurar el tamaño de los botones (sin texto)
