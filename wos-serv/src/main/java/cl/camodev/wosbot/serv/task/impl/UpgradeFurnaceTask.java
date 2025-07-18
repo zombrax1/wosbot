@@ -253,9 +253,9 @@ public class UpgradeFurnaceTask extends DelayedTask {
 				}
 
 
-			} catch (Exception e) {
-				// TODO: handle exception
-			}
+                        } catch (Exception e) {
+                                servLogs.appendLog(EnumTpMessageSeverity.ERROR, taskName, profile.getName(), "Unexpected error: " + e.getMessage());
+                        }
 
 		} else{
 			emuManager.tapBackButton(EMULATOR_NUMBER);
