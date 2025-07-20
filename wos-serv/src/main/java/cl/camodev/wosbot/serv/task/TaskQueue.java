@@ -287,17 +287,7 @@ public class TaskQueue {
 	}
 
 	private void encolarNuevaTarea() {
-        ServLogs.getServices().appendLog(EnumTpMessageSeverity.INFO, "TaskQueue", profile.getName(), "scheduled tasks will start soon");
 
-        try {
-            EmulatorManager.getInstance().adquireEmulatorSlot(profile.getId(), (thread, position) -> {
-                ServProfiles.getServices().notifyProfileStatusChange(new DTOProfileStatus(profile.getId(), "Waiting for slot, position: " + position));
-            });
-        } catch (InterruptedException e) {
-            logger.error("Interrupted while acquiring emulator slot for profile " + profile.getName(), e);
-        }
-        addTask(new InitializeTask(profile, TpDailyTaskEnum.INITIALIZE));
-    }
 
 	/**
 	 * Detiene inmediatamente el procesamiento de la cola, sin importar en qué estado esté.

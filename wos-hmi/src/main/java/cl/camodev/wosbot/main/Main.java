@@ -8,21 +8,6 @@ public class Main {
 	private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
 	public static void main(String[] args) {
-		try {
-			// Initialize Log4j configuration
-			configureLog4j();
-
-			logger.info("Starting WosBot application");
-			logger.info("Logging configured. Check log/bot.log for detailed logs.");
-
-			// Launch JavaFX application
-			FXApp.main(args);
-
-		} catch (Exception e) {
-			logger.error("Failed to start application: " + e.getMessage(), e);
-			System.exit(1);
-		}
-	}
 
 	/**
 	 * Configure Log4j programmatically

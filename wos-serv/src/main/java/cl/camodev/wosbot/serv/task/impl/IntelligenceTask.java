@@ -30,10 +30,9 @@ public class IntelligenceTask extends DelayedTask {
 	private boolean marchQueueLimitReached = false;
 	private boolean fcEra = false;
 
-	public IntelligenceTask(DTOProfiles profile, TpDailyTaskEnum tpTask) {
-		super(profile, tpTask);
-		// TODO Auto-generated constructor stub
-	}
+        public IntelligenceTask(DTOProfiles profile, TpDailyTaskEnum tpTask) {
+                super(profile, tpTask);
+        }
 
 	@Override
 	protected void execute() {
