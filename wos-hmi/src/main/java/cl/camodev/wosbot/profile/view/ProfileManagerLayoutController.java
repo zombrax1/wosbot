@@ -31,6 +31,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -115,7 +116,8 @@ public class ProfileManagerLayoutController implements IProfileChangeObserver {
 //						btnSave.setPrefSize(30, 30);
 
 						btnDelete.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
-						btnLoad.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
+                                                btnLoad.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
+                                                btnLoad.setTooltip(new Tooltip("Activate profile and load tasks"));
 //						btnSave.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
 
 						// Acción para el botón Delete

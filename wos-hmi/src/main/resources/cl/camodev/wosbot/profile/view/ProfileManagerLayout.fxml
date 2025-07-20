@@ -8,6 +8,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.Region?>
 
 <GridPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="306.0" prefWidth="468.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
   <columnConstraints>
@@ -15,7 +16,8 @@
   </columnConstraints>
   <rowConstraints>
     <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" prefHeight="266.0" vgrow="SOMETIMES" />
-      <RowConstraints maxHeight="40.0" minHeight="40.0" prefHeight="40.0" vgrow="SOMETIMES" />
+    <RowConstraints maxHeight="40.0" minHeight="40.0" prefHeight="40.0" vgrow="SOMETIMES" />
+    <RowConstraints maxHeight="Region.USE_COMPUTED_SIZE" minHeight="20.0" prefHeight="20.0" vgrow="NEVER" />
   </rowConstraints>
    <children>
       <TableView fx:id="tableviewLogMessages" prefHeight="200.0" prefWidth="200.0">
@@ -47,5 +49,6 @@
             </Button>
          </children>
       </HBox>
+      <Label text="Use the play icon to activate a profile and load its tasks." GridPane.rowIndex="2" />
    </children>
 </GridPane>
