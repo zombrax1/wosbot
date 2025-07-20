@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import cl.camodev.wosbot.serv.task.TaskConstants;
 
 
 
@@ -108,7 +109,7 @@ public class TaskQueue {
 
 		schedulerThread = new Thread(() -> {
 
-			boolean idlingTimeExceded = false;
+                        boolean idlingTimeExceeded = false;
 			ServProfiles.getServices().notifyProfileStatusChange(new DTOProfileStatus(profile.getId(), "Getting queue slot"));
 			logger.info("Profile " + profile.getName() + " is getting queue slot.");
 			try {
@@ -125,7 +126,7 @@ public class TaskQueue {
 					try {
 						ServProfiles.getServices().notifyProfileStatusChange(new DTOProfileStatus(profile.getId(), "PAUSED"));
 						logger.info("Profile " + profile.getName() + " is paused.");
-						Thread.sleep(1000); // Wait 1 second while paused
+                                                Thread.sleep(TaskConstants.ONE_SECOND_MS); // Wait 1 second while paused
 						continue;
 					} catch (InterruptedException e) {
 						Thread.currentThread().interrupt();
@@ -238,15 +239,15 @@ public class TaskQueue {
 					long maxIdle = 0;
 					maxIdle = Optional.ofNullable(profile.getGlobalsettings().get(EnumConfigurationKey.MAX_IDLE_TIME_INT.name())).map(Integer::parseInt).orElse(Integer.parseInt(EnumConfigurationKey.MAX_IDLE_TIME_INT.getDefaultValue()));
 
-					if (!idlingTimeExceded && minDelay > TimeUnit.MINUTES.toSeconds(maxIdle)) {
-						idlingTimeExceded = true;
+                                        if (!idlingTimeExceeded && minDelay > TimeUnit.MINUTES.toSeconds(maxIdle)) {
+                                                idlingTimeExceeded = true;
 						idlingEmulator(minDelay);
 					}
 
 					// Si la demora baja a menos de 1 minuto y intentamos obtener el slot de emulador y encolamos tarea de inicialización
-					if (idlingTimeExceded && minDelay < TimeUnit.MINUTES.toSeconds(1)) {
+                                        if (idlingTimeExceeded && minDelay < TimeUnit.MINUTES.toSeconds(1)) {
 						encolarNuevaTarea();
-						idlingTimeExceded = false; // Restablecer la condición para futuras evaluaciones
+                                                idlingTimeExceeded = false; // Restablecer la condición para futuras evaluaciones
 					}
 				}
 
@@ -286,7 +287,7 @@ public class TaskQueue {
 	}
 
 	private void encolarNuevaTarea() {
-        ServLogs.getServices().appendLog(EnumTpMessageSeverity.INFO, "TaskQueue", profile.getName(), "shcheduled task's will start soon");
+        ServLogs.getServices().appendLog(EnumTpMessageSeverity.INFO, "TaskQueue", profile.getName(), "scheduled tasks will start soon");
 
         try {
             EmulatorManager.getInstance().adquireEmulatorSlot(profile.getId(), (thread, position) -> {
@@ -308,7 +309,7 @@ public class TaskQueue {
 			schedulerThread.interrupt(); // Interrumpir el hilo para forzar la salida inmediata
 
 			try {
-				schedulerThread.join(1000); // Esperar hasta 1 segundo para que el hilo termine
+                                schedulerThread.join(TaskConstants.ONE_SECOND_MS); // Esperar hasta 1 segundo para que el hilo termine
 			} catch (InterruptedException e) {
 				logger.error("Interrupted while stopping TaskQueue for profile " + profile.getName(), e);
 				Thread.currentThread().interrupt();

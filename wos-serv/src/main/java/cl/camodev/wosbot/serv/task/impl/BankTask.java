@@ -18,6 +18,7 @@ import cl.camodev.wosbot.ot.DTOProfiles;
 import cl.camodev.wosbot.serv.impl.ServLogs;
 import cl.camodev.wosbot.serv.impl.ServScheduler;
 import cl.camodev.wosbot.serv.task.DelayedTask;
+import cl.camodev.wosbot.serv.task.TaskConstants;
 import net.sourceforge.tess4j.TesseractException;
 
 public class BankTask extends DelayedTask {
@@ -47,8 +48,8 @@ public class BankTask extends DelayedTask {
 			} else {
 				// If home screen is not found, log warning and go back
 				logWarning("Home not found");
-				EmulatorManager.getInstance().tapBackButton(EMULATOR_NUMBER);
-				sleepTask(2000);
+                                EmulatorManager.getInstance().tapBackButton(EMULATOR_NUMBER);
+                                sleepTask(TaskConstants.TWO_SECONDS_MS);
 			}
 			attempt++;
 		}
@@ -74,11 +75,11 @@ public class BankTask extends DelayedTask {
 		}
 
 		emuManager.tapAtRandomPoint(EMULATOR_NUMBER, dealsResult.getPoint(), dealsResult.getPoint());
-		sleepTask(2000);
+            sleepTask(TaskConstants.TWO_SECONDS_MS);
 		emuManager.executeSwipe(EMULATOR_NUMBER, new DTOPoint(630, 143), new DTOPoint(2, 128));
-		sleepTask(200);
+            sleepTask(TaskConstants.QUARTER_SECOND_MS);
 		emuManager.executeSwipe(EMULATOR_NUMBER, new DTOPoint(630, 143), new DTOPoint(2, 128));
-		sleepTask(200);
+            sleepTask(TaskConstants.QUARTER_SECOND_MS);
 		// Search for the bank option within events
 		DTOImageSearchResult bankResult = emuManager.searchTemplate(EMULATOR_NUMBER, EnumTemplates.EVENTS_DEALS_BANK.getTemplate(), 90);
 		if (!bankResult.isFound()) {
@@ -87,7 +88,7 @@ public class BankTask extends DelayedTask {
 		}
 
 		emuManager.tapAtRandomPoint(EMULATOR_NUMBER, bankResult.getPoint(), bankResult.getPoint());
-		sleepTask(1000);
+            sleepTask(TaskConstants.ONE_SECOND_MS);
 
 		logInfo("Successfully navigated to bank");
 		return true;
@@ -128,10 +129,10 @@ public class BankTask extends DelayedTask {
 		DTOImageSearchResult withdrawResult = emuManager.searchTemplate(EMULATOR_NUMBER, EnumTemplates.EVENTS_DEALS_BANK_WITHDRAW.getTemplate(),  90);
 		if (withdrawResult.isFound()) {
 			emuManager.tapAtRandomPoint(EMULATOR_NUMBER, withdrawResult.getPoint(), withdrawResult.getPoint());
-			sleepTask(1000);
+                    sleepTask(TaskConstants.ONE_SECOND_MS);
 			// Tap close/back button after withdrawal
 			emuManager.tapAtRandomPoint(EMULATOR_NUMBER, new DTOPoint(670, 40), new DTOPoint(670, 40), 15, 100);
-			sleepTask(1000);
+                    sleepTask(TaskConstants.ONE_SECOND_MS);
 			logInfo("Deposit successfully withdrawn");
 		}
 	}
@@ -202,7 +203,7 @@ public class BankTask extends DelayedTask {
 			emuManager.tapAtRandomPoint(EMULATOR_NUMBER, depositAvailableResult.getPoint(), depositAvailableResult.getPoint());
 			logInfo("Selected " + depositType + " deposit at: " + depositAvailableResult.getPoint());
 
-			sleepTask(2000);
+                    sleepTask(TaskConstants.TWO_SECONDS_MS);
 			// Confirm deposit
 			emuManager.executeSwipe(EMULATOR_NUMBER, new DTOPoint(168, 762), new DTOPoint(477, 760));
 			emuManager.tapAtRandomPoint(EMULATOR_NUMBER, new DTOPoint(410, 877), new DTOPoint(589, 919));
@@ -234,7 +235,7 @@ public class BankTask extends DelayedTask {
 			// There's an active deposit - read the remaining time
 			logInfo("Active deposit found, reading remaining time");
 			emuManager.tapAtPoint(EMULATOR_NUMBER, activeDepositResult.getPoint());
-			sleepTask(200);
+                    sleepTask(TaskConstants.QUARTER_SECOND_MS);
 
 			// Try OCR up to 5 times before fallback
 			boolean ocrSuccess = false;
@@ -258,13 +259,13 @@ public class BankTask extends DelayedTask {
 					logWarning("OCR attempt " + attempt + " failed: " + e.getMessage());
 					if (attempt < maxOcrAttempts) {
 						// Wait a bit before retrying
-						sleepTask(1000);
+                                            sleepTask(TaskConstants.ONE_SECOND_MS);
 					}
 				} catch (IllegalArgumentException e) {
 					logWarning("OCR attempt " + attempt + " - invalid time format: " + e.getMessage() + " (text: '" + timeLeft + "')");
 					if (attempt < maxOcrAttempts) {
 						// Wait a bit before retrying
-						sleepTask(1000);
+                                            sleepTask(TaskConstants.ONE_SECOND_MS);
 					}
 				}
 			}
