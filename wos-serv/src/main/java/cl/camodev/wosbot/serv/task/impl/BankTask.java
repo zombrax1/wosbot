@@ -2,6 +2,8 @@ package cl.camodev.wosbot.serv.task.impl;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,6 +18,7 @@ import cl.camodev.wosbot.ot.DTOProfiles;
 import cl.camodev.wosbot.serv.impl.ServLogs;
 import cl.camodev.wosbot.serv.impl.ServScheduler;
 import cl.camodev.wosbot.serv.task.DelayedTask;
+import cl.camodev.wosbot.serv.task.TaskConstants;
 import net.sourceforge.tess4j.TesseractException;
 
 public class BankTask extends DelayedTask {
@@ -33,8 +36,8 @@ public class BankTask extends DelayedTask {
 
 		while (attempt < 5) {
 			// Check if we are on the home screen
-			DTOImageSearchResult homeResult = emuManager.searchTemplate(EMULATOR_NUMBER, EnumTemplates.GAME_HOME_FURNACE.getTemplate(), 0, 0, 720, 1280, 90);
-			DTOImageSearchResult worldResult = emuManager.searchTemplate(EMULATOR_NUMBER, EnumTemplates.GAME_HOME_WORLD.getTemplate(), 0, 0, 720, 1280, 90);
+			DTOImageSearchResult homeResult = emuManager.searchTemplate(EMULATOR_NUMBER, EnumTemplates.GAME_HOME_FURNACE.getTemplate(),  90);
+			DTOImageSearchResult worldResult = emuManager.searchTemplate(EMULATOR_NUMBER, EnumTemplates.GAME_HOME_WORLD.getTemplate(), 90);
 
 			if (homeResult.isFound() || worldResult.isFound()) {
 				if (navigateToBank()) {
@@ -45,8 +48,8 @@ public class BankTask extends DelayedTask {
 			} else {
 				// If home screen is not found, log warning and go back
 				logWarning("Home not found");
-				EmulatorManager.getInstance().tapBackButton(EMULATOR_NUMBER);
-				sleepTask(2000);
+                                EmulatorManager.getInstance().tapBackButton(EMULATOR_NUMBER);
+                                sleepTask(TaskConstants.TWO_SECONDS_MS);
 			}
 			attempt++;
 		}
@@ -65,25 +68,27 @@ public class BankTask extends DelayedTask {
 	 */
 	private boolean navigateToBank() {
 		// Search for the Deals button
-		DTOImageSearchResult dealsResult = emuManager.searchTemplate(EMULATOR_NUMBER, EnumTemplates.HOME_DEALS_BUTTON.getTemplate(), 0, 0, 720, 1280, 90);
+		DTOImageSearchResult dealsResult = emuManager.searchTemplate(EMULATOR_NUMBER, EnumTemplates.HOME_DEALS_BUTTON.getTemplate(),  90);
 		if (!dealsResult.isFound()) {
 			logWarning("Deals button not found");
 			return false;
 		}
 
 		emuManager.tapAtRandomPoint(EMULATOR_NUMBER, dealsResult.getPoint(), dealsResult.getPoint());
-		sleepTask(2000);
+            sleepTask(TaskConstants.TWO_SECONDS_MS);
 		emuManager.executeSwipe(EMULATOR_NUMBER, new DTOPoint(630, 143), new DTOPoint(2, 128));
-
+            sleepTask(TaskConstants.QUARTER_SECOND_MS);
+		emuManager.executeSwipe(EMULATOR_NUMBER, new DTOPoint(630, 143), new DTOPoint(2, 128));
+            sleepTask(TaskConstants.QUARTER_SECOND_MS);
 		// Search for the bank option within events
-		DTOImageSearchResult bankResult = emuManager.searchTemplate(EMULATOR_NUMBER, EnumTemplates.EVENTS_DEALS_BANK.getTemplate(), 0, 0, 720, 1280, 90);
+		DTOImageSearchResult bankResult = emuManager.searchTemplate(EMULATOR_NUMBER, EnumTemplates.EVENTS_DEALS_BANK.getTemplate(), 90);
 		if (!bankResult.isFound()) {
 			logWarning("Bank option not found");
 			return false;
 		}
 
 		emuManager.tapAtRandomPoint(EMULATOR_NUMBER, bankResult.getPoint(), bankResult.getPoint());
-		sleepTask(1000);
+            sleepTask(TaskConstants.ONE_SECOND_MS);
 
 		logInfo("Successfully navigated to bank");
 		return true;
@@ -97,7 +102,7 @@ public class BankTask extends DelayedTask {
 	 */
 	private void handleBankOperations(int bankDelay) {
 		// STEP 1: Check if there's a deposit ready to withdraw
-		DTOImageSearchResult withdrawAvailableResult = emuManager.searchTemplate(EMULATOR_NUMBER, EnumTemplates.EVENTS_DEALS_BANK_WITHDRAW.getTemplate(), 0, 0, 720, 1280, 90);
+		DTOImageSearchResult withdrawAvailableResult = emuManager.searchTemplate(EMULATOR_NUMBER, EnumTemplates.EVENTS_DEALS_BANK_WITHDRAW.getTemplate(),  90);
 
 		if (withdrawAvailableResult.isFound()) {
 			// Deposit is ready - withdraw it
@@ -121,13 +126,13 @@ public class BankTask extends DelayedTask {
 	 * Withdraws the ready deposit
 	 */
 	private void withdrawDeposit() {
-		DTOImageSearchResult withdrawResult = emuManager.searchTemplate(EMULATOR_NUMBER, EnumTemplates.EVENTS_DEALS_BANK_WITHDRAW.getTemplate(), 0, 0, 720, 1280, 90);
+		DTOImageSearchResult withdrawResult = emuManager.searchTemplate(EMULATOR_NUMBER, EnumTemplates.EVENTS_DEALS_BANK_WITHDRAW.getTemplate(),  90);
 		if (withdrawResult.isFound()) {
 			emuManager.tapAtRandomPoint(EMULATOR_NUMBER, withdrawResult.getPoint(), withdrawResult.getPoint());
-			sleepTask(1000);
+                    sleepTask(TaskConstants.ONE_SECOND_MS);
 			// Tap close/back button after withdrawal
 			emuManager.tapAtRandomPoint(EMULATOR_NUMBER, new DTOPoint(670, 40), new DTOPoint(670, 40), 15, 100);
-			sleepTask(1000);
+                    sleepTask(TaskConstants.ONE_SECOND_MS);
 			logInfo("Deposit successfully withdrawn");
 		}
 	}
@@ -198,7 +203,7 @@ public class BankTask extends DelayedTask {
 			emuManager.tapAtRandomPoint(EMULATOR_NUMBER, depositAvailableResult.getPoint(), depositAvailableResult.getPoint());
 			logInfo("Selected " + depositType + " deposit at: " + depositAvailableResult.getPoint());
 
-			sleepTask(2000);
+                    sleepTask(TaskConstants.TWO_SECONDS_MS);
 			// Confirm deposit
 			emuManager.executeSwipe(EMULATOR_NUMBER, new DTOPoint(168, 762), new DTOPoint(477, 760));
 			emuManager.tapAtRandomPoint(EMULATOR_NUMBER, new DTOPoint(410, 877), new DTOPoint(589, 919));
@@ -223,36 +228,56 @@ public class BankTask extends DelayedTask {
 		DTOImageSearchResult activeDepositResult = emuManager.searchTemplate(
 				EMULATOR_NUMBER,
 				EnumTemplates.EVENTS_DEALS_BANK_INDEPOSIT.getTemplate(),
-				0, 0, 720, 1280, 90
+				 90
 		);
 
 		if (activeDepositResult.isFound()) {
 			// There's an active deposit - read the remaining time
 			logInfo("Active deposit found, reading remaining time");
 			emuManager.tapAtPoint(EMULATOR_NUMBER, activeDepositResult.getPoint());
-			sleepTask(200);
+                    sleepTask(TaskConstants.QUARTER_SECOND_MS);
 
-			try {
-				String timeLeft = emuManager.ocrRegionText(EMULATOR_NUMBER, new DTOPoint(240, 770), new DTOPoint(470, 810));
-				LocalDateTime nextBank = parseAndAddToNow(timeLeft);
-				this.reschedule(nextBank);
+			// Try OCR up to 5 times before fallback
+			boolean ocrSuccess = false;
+			String timeLeft = null;
+			int maxOcrAttempts = 5;
 
-				logInfo("Deposit not ready, rescheduled for: " + nextBank + " (remaining: " + timeLeft + ")");
+			for (int attempt = 1; attempt <= maxOcrAttempts; attempt++) {
+				try {
+					logInfo("OCR attempt " + attempt + " of " + maxOcrAttempts);
+					timeLeft = emuManager.ocrRegionText(EMULATOR_NUMBER, new DTOPoint(220, 770), new DTOPoint(490, 810));
 
-			} catch (IOException | TesseractException e) {
-				logError("Error reading remaining time with OCR: " + e.getMessage());
+					// Try to parse the time to validate it's a valid format
+					LocalDateTime nextBank = parseAndAddToNow(timeLeft);
+					this.reschedule(nextBank);
 
-				// Fallback: schedule check in 1 hour
+					logInfo("Deposit not ready, rescheduled for: " + nextBank + " (remaining: " + timeLeft + ")");
+					ocrSuccess = true;
+					break; // Success, exit the retry loop
+
+				} catch (IOException | TesseractException e) {
+					logWarning("OCR attempt " + attempt + " failed: " + e.getMessage());
+					if (attempt < maxOcrAttempts) {
+						// Wait a bit before retrying
+                                            sleepTask(TaskConstants.ONE_SECOND_MS);
+					}
+				} catch (IllegalArgumentException e) {
+					logWarning("OCR attempt " + attempt + " - invalid time format: " + e.getMessage() + " (text: '" + timeLeft + "')");
+					if (attempt < maxOcrAttempts) {
+						// Wait a bit before retrying
+                                            sleepTask(TaskConstants.ONE_SECOND_MS);
+					}
+				}
+			}
+
+			// If all OCR attempts failed, use fallback
+			if (!ocrSuccess) {
+				logError("All " + maxOcrAttempts + " OCR attempts failed, using fallback schedule");
 				LocalDateTime fallbackTime = LocalDateTime.now().plusHours(1);
 				this.reschedule(fallbackTime);
 				logWarning("Using fallback schedule: " + fallbackTime);
-			} catch (IllegalArgumentException e) {
-				logError("Error parsing time format: " + e.getMessage());
-
-				// Fallback: schedule check in 1 hour
-				LocalDateTime fallbackTime = LocalDateTime.now().plusHours(1);
-				this.reschedule(fallbackTime);
 			}
+
 		} else {
 			// No active deposit found - make a new deposit
 			logInfo("No active deposit found, creating new deposit");
@@ -263,45 +288,28 @@ public class BankTask extends DelayedTask {
 	}
 
 	public LocalDateTime parseAndAddToNow(String text) {
-		if (text == null || text.trim().isEmpty()) {
-			throw new IllegalArgumentException("Input text is empty or null");
-		}
-
-		// Replace 'O' (uppercase letter O) with '0' (zero)
-		text = text.toUpperCase().replace('O', '0').trim();
-
-		// Remove extra spaces within the string
-		text = text.replaceAll("\\s+", " ");
-
-		// Regular expression to detect format with days or time only
-		Pattern pattern = Pattern.compile("(\\d+)d\\s*(\\d{1,2}:\\d{2}:\\d{2})|^(\\d{1,2}:\\d{2}:\\d{2})$");
-		Matcher matcher = pattern.matcher(text);
+		// Regular expression to match the input format [n]d HH:mm:ss' o 'HH:mm:ss
+		Pattern pattern = Pattern.compile("(?i).*?(?:(\\d+)\\s*d\\D*)?(\\d{1,2}:\\d{2}:\\d{2}).*", Pattern.DOTALL);
+		Matcher matcher = pattern.matcher(text.trim());
 
 		if (!matcher.matches()) {
-			throw new IllegalArgumentException("Invalid format: '" + text + "'");
+			throw new IllegalArgumentException("Input does not match the expected format. Expected format: [n]d HH:mm:ss' o 'HH:mm:ss");
 		}
 
-		int daysToAdd = 0;
-		String timeText;
+		String daysStr = matcher.group(1);
+		String timeStr = matcher.group(2);
 
-		if (matcher.group(1) != null) { // If there's a number of days
-			daysToAdd = Integer.parseInt(matcher.group(1));
-			timeText = matcher.group(2);
-		} else { // Only time
-			timeText = matcher.group(3);
-		}
+		int daysToAdd = (daysStr != null) ? Integer.parseInt(daysStr) : 0;
 
-		// Parse hours, minutes and seconds from time string
-		String[] timeParts = timeText.split(":");
-		int hours = Integer.parseInt(timeParts[0]);
-		int minutes = Integer.parseInt(timeParts[1]);
-		int seconds = Integer.parseInt(timeParts[2]);
+		// parser for time part
+		DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("H:mm:ss");
+		LocalTime timePart = LocalTime.parse(timeStr, timeFormatter);
 
-		// Get current date and time
-		LocalDateTime now = LocalDateTime.now();
 
-		// Add days, hours, minutes and seconds
-		return now.plusDays(daysToAdd).plusHours(hours).plusMinutes(minutes).plusSeconds(seconds);
+		return LocalDateTime.now()
+				.plusDays(daysToAdd)
+				.plusHours(timePart.getHour())
+				.plusMinutes(timePart.getMinute())
+				.plusSeconds(timePart.getSecond());
 	}
 }
-

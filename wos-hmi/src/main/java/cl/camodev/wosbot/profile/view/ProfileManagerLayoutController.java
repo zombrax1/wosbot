@@ -32,6 +32,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -85,6 +86,18 @@ public class ProfileManagerLayoutController implements IProfileChangeObserver {
 		columnEmulatorNumber.setCellValueFactory(cellData -> cellData.getValue().emulatorNumberProperty());
 		columnStatus.setCellValueFactory(cellData -> cellData.getValue().statusProperty());
 
+		// Add double-click event handler to open edit dialog
+		tableviewLogMessages.setRowFactory(tv -> {
+			javafx.scene.control.TableRow<ProfileAux> row = new javafx.scene.control.TableRow<>();
+			row.setOnMouseClicked(event -> {
+				if (event.getClickCount() == 2 && (!row.isEmpty())) {
+					ProfileAux selectedProfile = row.getItem();
+					profileManagerActionController.showEditProfileDialog(selectedProfile, tableviewLogMessages);
+				}
+			});
+			return row;
+		});
+
 		columnDelete.setCellFactory(new Callback<TableColumn<ProfileAux, Void>, TableCell<ProfileAux, Void>>() {
 			@Override
 			public TableCell<ProfileAux, Void> call(TableColumn<ProfileAux, Void> param) {
@@ -106,7 +119,8 @@ public class ProfileManagerLayoutController implements IProfileChangeObserver {
 //						btnSave.setPrefSize(30, 30);
 
 						btnDelete.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
-						btnLoad.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
+                                                btnLoad.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
+                                                btnLoad.setTooltip(new Tooltip("Activate profile and load tasks"));
 //						btnSave.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
 
 						// Acción para el botón Delete

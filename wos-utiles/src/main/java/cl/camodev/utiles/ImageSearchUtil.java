@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -15,8 +16,10 @@ import org.opencv.imgproc.Imgproc;
 
 import cl.camodev.wosbot.ot.DTOImageSearchResult;
 import cl.camodev.wosbot.ot.DTOPoint;
+import org.slf4j.*;
 
 public class ImageSearchUtil {
+	private static final Logger logger = LoggerFactory.getLogger(ImageSearchUtil.class);
 
 	/**
 	 * Realiza la búsqueda de un template (plantilla) dentro de una imagen principal.
@@ -27,7 +30,6 @@ public class ImageSearchUtil {
 	 * proporcionado.
 	 * </p>
 	 *
-	 * @param imagenPrincipalPath  Ruta de la imagen externa a comparar.
 	 * @param templateResourcePath Ruta del template dentro de los recursos del jar.
 	 * @param roiX                 Coordenada X del punto superior izquierdo de la ROI.
 	 * @param roiY                 Coordenada Y del punto superior izquierdo de la ROI.
@@ -44,7 +46,6 @@ public class ImageSearchUtil {
 	 *         </ul>
 	 */
 
-
 	public static DTOImageSearchResult buscarTemplate(byte[] image, String templateResourcePath, int roiX, int roiY, int roiWidth, int roiHeight, double thresholdPercentage) {
 		try {
 
@@ -53,14 +54,14 @@ public class ImageSearchUtil {
 			Mat imagenPrincipal = Imgcodecs.imdecode(matOfByte, Imgcodecs.IMREAD_COLOR);
 
 			if (imagenPrincipal.empty()) {
-				System.err.println("Error while loading image from byte array.");
+				logger.error("Error while loading image from byte array.");
 				return new DTOImageSearchResult(false, null, 0.0);
 			}
 
 			// Cargar la plantilla desde los recursos
 			InputStream is = ImageSearchUtil.class.getResourceAsStream(templateResourcePath);
 			if (is == null) {
-				System.err.println(templateResourcePath + " not found.");
+				logger.error(templateResourcePath + " not found.");
 				return new DTOImageSearchResult(false, null, 0.0);
 			}
 
@@ -73,13 +74,13 @@ public class ImageSearchUtil {
 			Mat template = Imgcodecs.imdecode(templateMatOfByte, Imgcodecs.IMREAD_COLOR);
 
 			if (template.empty()) {
-				System.err.println("Error al decodificar la plantilla.");
+				logger.error("Error decoding template.");
 				return new DTOImageSearchResult(false, null, 0.0);
 			}
 
 			// Validar la ROI
 			if (roiX + roiWidth > imagenPrincipal.cols() || roiY + roiHeight > imagenPrincipal.rows()) {
-				System.err.println("Defined ROI is out of bounds.");
+				logger.error("Defined ROI is out of bounds.");
 				return new DTOImageSearchResult(false, null, 0.0);
 			}
 
@@ -91,7 +92,7 @@ public class ImageSearchUtil {
 			int resultCols = imagenROI.cols() - template.cols() + 1;
 			int resultRows = imagenROI.rows() - template.rows() + 1;
 			if (resultCols <= 0 || resultRows <= 0) {
-				System.err.println("Template is larger than ROI.");
+				logger.error("Template is larger than ROI.");
 				return new DTOImageSearchResult(false, null, 0.0);
 			}
 
@@ -104,7 +105,7 @@ public class ImageSearchUtil {
 			double matchPercentage = mmr.maxVal * 100.0;
 
 			if (matchPercentage < thresholdPercentage) {
-				System.out.println("Template " + templateResourcePath + " not found. Match percentage: " + matchPercentage);
+				logger.info("Template " + templateResourcePath + " not found. Match percentage: " + matchPercentage);
 				return new DTOImageSearchResult(false, null, matchPercentage);
 			}
 
@@ -116,7 +117,7 @@ public class ImageSearchUtil {
 			return new DTOImageSearchResult(true, new DTOPoint((int) centerX, (int) centerY), matchPercentage);
 
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.error("Exception during template search.", e);
 			return new DTOImageSearchResult(false, null, 0.0);
 		}
 	}

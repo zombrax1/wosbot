@@ -5,7 +5,6 @@ import cl.camodev.wosbot.console.enumerable.TpDailyTaskEnum;
 import cl.camodev.wosbot.ot.DTODailyTaskStatus;
 import cl.camodev.wosbot.ot.DTOProfiles;
 import cl.camodev.wosbot.ot.DTOTaskState;
-import cl.camodev.wosbot.serv.impl.ServProfiles;
 import cl.camodev.wosbot.serv.impl.ServScheduler;
 import cl.camodev.wosbot.taskmanager.controller.TaskManagerActionController;
 import cl.camodev.wosbot.taskmanager.model.TaskManagerAux;
@@ -32,19 +31,6 @@ import java.util.stream.Collectors;
 
 public class TaskManagerLayoutController {
 
-	private final Image iconTrue = new Image(getClass().getResourceAsStream("/icons/indicators/green.png"));
-	private final Image iconFalse = new Image(getClass().getResourceAsStream("/icons/indicators/red.png"));
-
-	private TaskManagerActionController taskManagerActionController = new TaskManagerActionController(this);
-
-	@FXML
-	private TabPane tabPaneProfiles;
-
-	private final ObjectProperty<LocalDateTime> globalClock = new SimpleObjectProperty<>(LocalDateTime.now());
-
-	private final Map<Long, Tab> profileTabsMap = new HashMap<>();
-	private final Map<Long, ObservableList<TaskManagerAux>> tasks = new HashMap<>();
-
 	private static final Comparator<TaskManagerAux> TASK_AUX_COMPARATOR = (a, b) -> {
 		if (a.isScheduled() && !b.isScheduled())
 			return -1;
@@ -61,16 +47,57 @@ public class TaskManagerLayoutController {
 		return Long.compare(a.getNearestMinutesUntilExecution(), b.getNearestMinutesUntilExecution());
 	};
 
+	private final Image iconTrue = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/indicators/green.png")));
+	private final Image iconFalse = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/indicators/red.png")));
+	private final ObjectProperty<LocalDateTime> globalClock = new SimpleObjectProperty<>(LocalDateTime.now());
+	private final Map<Long, Tab> profileTabsMap = new HashMap<>();
+	private final Map<Long, ObservableList<TaskManagerAux>> tasks = new HashMap<>();
+	private final TaskManagerActionController taskManagerActionController = new TaskManagerActionController(this);
+
 	@FXML
-	private void initialize() {
+	private TabPane tabPaneProfiles;
+
+	@FXML
+	public void initialize() {
 		loadProfiles();
 
-		Timeline ticker = new Timeline(new KeyFrame(Duration.seconds(5), evt -> {
-			globalClock.set(LocalDateTime.now());
-		}));
+		Timeline ticker = new Timeline(new KeyFrame(Duration.seconds(1), evt -> updateTimeValues()));
 		ticker.setCycleCount(Animation.INDEFINITE);
 		ticker.play();
+	}
 
+	// Method to update time-dependent values and trigger reordering
+	private void updateTimeValues() {
+		Platform.runLater(() -> {
+			LocalDateTime now = LocalDateTime.now();
+			globalClock.set(now);
+
+			// Update all tables for all profiles
+			tasks.forEach((profileId, dataList) -> {
+				boolean needsReorder = false;
+
+				for (TaskManagerAux task : dataList) {
+					if (task.getNextExecution() != null) {
+						long newSeconds = ChronoUnit.SECONDS.between(now, task.getNextExecution());
+						long oldSeconds = task.getNearestMinutesUntilExecution();
+						boolean newReady = newSeconds <= 0;
+						boolean oldReady = task.hasReadyTask();
+
+						// Update values if they changed
+						if (newSeconds != oldSeconds || newReady != oldReady) {
+							task.setNearestMinutesUntilExecution(Math.max(0, newSeconds));
+							task.setHasReadyTask(newReady);
+							needsReorder = true;
+						}
+					}
+				}
+
+				// Reorder the table if any time values changed
+				if (needsReorder) {
+					FXCollections.sort(dataList, TASK_AUX_COMPARATOR);
+				}
+			});
+		});
 	}
 
 	private void loadProfiles() {
@@ -150,19 +177,19 @@ public class TaskManagerLayoutController {
 					return new TaskManagerAux(task.getName(), null, null, task, profile.getId(), Long.MAX_VALUE, false, false, false);
 				}
 
-				long diff = Long.MAX_VALUE;
+				long diffInSeconds = Long.MAX_VALUE;
 				boolean ready = false;
 				if (s.getNextSchedule() != null) {
-					diff = ChronoUnit.MINUTES.between(LocalDateTime.now(), s.getNextSchedule());
-					if (diff <= 0) {
+					diffInSeconds = ChronoUnit.SECONDS.between(LocalDateTime.now(), s.getNextSchedule());
+					if (diffInSeconds <= 0) {
 						ready = true;
-						diff = 0;
+						diffInSeconds = 0;
 					}
 				}
 
 				boolean scheduled = Optional.ofNullable(ServScheduler.getServices().getQueueManager().getQueue(profile.getId())).map(q -> q.isTaskScheduled(task)).orElse(false);
 
-				return new TaskManagerAux(task.getName(), s.getLastExecution(), s.getNextSchedule(), task, profile.getId(), diff, ready, scheduled, false);
+				return new TaskManagerAux(task.getName(), s.getLastExecution(), s.getNextSchedule(), task, profile.getId(), diffInSeconds, ready, scheduled, false);
 			}).sorted((a, b) -> {
 				if (a.isScheduled() && !b.isScheduled())
 					return -1;
@@ -250,7 +277,32 @@ public class TaskManagerLayoutController {
 		colNextExecution.setCellValueFactory(cellData -> {
 			TaskManagerAux t = cellData.getValue();
 			return Bindings.createStringBinding(() -> {
-				return UtilTime.formatNextExecution(t.getNextExecution(), globalClock.get(), t.executingProperty().get());
+				LocalDateTime now = globalClock.get();
+				LocalDateTime next = t.getNextExecution();
+				if (t.executingProperty().get()) {
+					return "Executing";
+				}
+				if (next == null) {
+					return "Never";
+				}
+				long diff = java.time.Duration.between(now, next).getSeconds();
+				if (diff <= 0) {
+					return "Ready";
+				} else if (diff < 60) {
+					return diff + "s";
+				} else if (diff < 3600) {
+					long min = diff / 60;
+					return min + "m";
+				} else if (diff < 86400) {
+					long h = diff / 3600;
+					long m = (diff % 3600) / 60;
+					return h + "h " + m + "m";
+				} else {
+					long d = diff / 86400;
+					long h = (diff % 86400) / 3600;
+					long m = (diff % 3600) / 60;
+					return d + "d " + h + "h " + m + "m";
+				}
 			}, t.nextExecutionProperty(), t.executingProperty(), globalClock);
 		});
 
@@ -260,66 +312,127 @@ public class TaskManagerLayoutController {
 				super.updateItem(item, empty);
 				if (empty || item == null) {
 					setText(null);
+					getStyleClass().removeAll(
+						"next-execution-ready", "next-execution-never", "next-execution-executing", "next-execution-seconds",
+						"next-execution-minutes-short", "next-execution-minutes-medium", "next-execution-minutes-long",
+						"next-execution-hours", "next-execution-days"
+					);
 					setStyle("");
 					return;
 				}
 				setText(item);
 
-				String style = "-fx-font-size: 14px; ";
+				// Remove all custom classes first
+				getStyleClass().removeAll(
+					"next-execution-ready", "next-execution-never", "next-execution-executing", "next-execution-seconds",
+					"next-execution-minutes-short", "next-execution-minutes-medium", "next-execution-minutes-long",
+					"next-execution-hours", "next-execution-days"
+				);
+
+				// Assign class based on value
 				if ("Ready".equals(item)) {
-					style += "-fx-text-fill: #4CAF50; -fx-font-weight: bold;";
+					getStyleClass().add("next-execution-ready");
 				} else if ("Never".equals(item) || "--".equals(item)) {
-					style += "-fx-text-fill: #757575;";
-				} else if (item.matches(".*[mhd].*")) {
-					String timeStr = item.replaceAll("[^0-9]", "");
-					int timeValue = timeStr.isEmpty() ? Integer.MAX_VALUE : Integer.parseInt(timeStr);
-					if (item.contains("m")) {
-						if (timeValue <= 15) {
-							style += "-fx-text-fill: #4CAF50; -fx-font-weight: bold;";
-						} else if (timeValue <= 60) {
-							style += "-fx-text-fill: #ffc107;";
-						} else {
-							style += "-fx-text-fill: #ff9800;";
-						}
-					} else if (item.contains("h")) {
-						style += (timeValue <= 2) ? "-fx-text-fill: #ffc107;" : "-fx-text-fill: #ff9800;";
+					getStyleClass().add("next-execution-never");
+				} else if ("Executing".equals(item)) {
+					getStyleClass().add("next-execution-executing");
+				} else if (item.endsWith("s")) {
+					getStyleClass().add("next-execution-seconds");
+				} else if (item.matches("\\d+m")) {
+					int min = Integer.parseInt(item.replace("m", ""));
+					if (min <= 15) {
+						getStyleClass().add("next-execution-minutes-short");
+					} else if (min <= 60) {
+						getStyleClass().add("next-execution-minutes-medium");
 					} else {
-						style += "-fx-text-fill: #ff5722;";
+						getStyleClass().add("next-execution-minutes-long");
 					}
-				} else {
-					style += "-fx-text-fill: white;";
+				} else if (item.matches("\\d+h \\d+m")) {
+					getStyleClass().add("next-execution-hours");
+				} else if (item.matches("\\d+d \\d+h \\d+m")) {
+					getStyleClass().add("next-execution-days");
 				}
-				setStyle(style);
 			}
 		});
 
 		TableColumn<TaskManagerAux, Void> colActions = new TableColumn<>("Actions");
-		colActions.setPrefWidth(100);
+		colActions.setPrefWidth(180);
 		colActions.setCellFactory(column -> new TableCell<>() {
 			private final Button btnExecute = new Button("Execute Now");
+			private final Button btnRemove = new Button("Remove");
+
 			{
-				btnExecute.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 12px; " + "-fx-padding: 6px 12px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
+				btnExecute.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 11px; " +
+					"-fx-padding: 4px 8px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
+				btnRemove.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-font-size: 11px; " +
+					"-fx-padding: 4px 8px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
+
 				btnExecute.setOnAction(ev -> {
 					TaskManagerAux item = getTableView().getItems().get(getIndex());
-					List<DTOProfiles> allProfiles = ServProfiles.getServices().getProfiles();
-					DTOProfiles profile = allProfiles.stream().filter(p -> p.getId().equals(item.getProfileId())).findFirst().orElse(null);
+					taskManagerActionController.executeTaskNow(item);
+				});
 
-					if (profile == null) {
-						System.err.println("Profile not found: " + item.getProfileId());
-						return;
-					}
+				btnRemove.setOnAction(ev -> {
+					TaskManagerAux item = getTableView().getItems().get(getIndex());
+					DTOProfiles profile = taskManagerActionController.findProfileById(item.getProfileId());
 
-					ServScheduler scheduler = ServScheduler.getServices();
-					scheduler.updateDailyTaskStatus(profile, item.getTaskEnum(), LocalDateTime.now());
-					scheduler.getQueueManager().getQueue(profile.getId()).executeTaskNow(item.getTaskEnum());
-
+					taskManagerActionController.removeTask(item, () -> {
+						// Refresh the table after successful removal
+						buildTaskManagerList(profile, list -> {
+							ObservableList<TaskManagerAux> dataList = tasks.get(profile.getId());
+							if (dataList != null) {
+								dataList.setAll(list);
+								FXCollections.sort(dataList, TASK_AUX_COMPARATOR);
+							}
+						});
+					});
 				});
 			}
 
 			@Override
 			protected void updateItem(Void item, boolean empty) {
 				super.updateItem(item, empty);
-				setGraphic(empty ? null : btnExecute);
+				if (empty) {
+					setGraphic(null);
+				} else {
+					// Get the task data to check its state
+					TaskManagerAux task = getTableRow().getItem();
+
+					if (task != null) {
+						// Check if queue is active for this profile
+						boolean queueActive = ServScheduler.getServices().getQueueManager().getQueue(task.getProfileId()) != null;
+
+						// Enable/disable execute button based on queue status
+						btnExecute.setDisable(!queueActive);
+
+						// Update execute button style when disabled
+						if (!queueActive) {
+							btnExecute.setStyle("-fx-background-color: #757575; -fx-text-fill: #bdbdbd; -fx-font-size: 11px; " +
+								"-fx-padding: 4px 8px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
+						} else {
+							btnExecute.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 11px; " +
+								"-fx-padding: 4px 8px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
+						}
+
+						// Enable/disable remove button based on task state
+						boolean canRemove = task.scheduledProperty().get() && !task.executingProperty().get();
+						btnRemove.setDisable(!canRemove);
+
+						// Update remove button style when disabled
+						if (!canRemove) {
+							btnRemove.setStyle("-fx-background-color: #757575; -fx-text-fill: #bdbdbd; -fx-font-size: 11px; " +
+								"-fx-padding: 4px 8px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
+						} else {
+							btnRemove.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-font-size: 11px; " +
+								"-fx-padding: 4px 8px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
+						}
+					}
+
+					// Create HBox to hold both buttons
+					javafx.scene.layout.HBox buttonBox = new javafx.scene.layout.HBox(5);
+					buttonBox.getChildren().addAll(btnExecute, btnRemove);
+					setGraphic(buttonBox);
+				}
 			}
 		});
 
@@ -355,8 +468,8 @@ public class TaskManagerLayoutController {
 			taskAux.setNextExecution(taskState.getNextExecutionTime());
 			taskAux.setScheduled(taskState.isScheduled());
 			taskAux.setExecuting(taskState.isExecuting());
-			taskAux.setHasReadyTask(taskState.getNextExecutionTime() != null && ChronoUnit.MINUTES.between(LocalDateTime.now(), taskState.getNextExecutionTime()) <= 0);
-			taskAux.setNearestMinutesUntilExecution(taskState.getNextExecutionTime() != null ? ChronoUnit.MINUTES.between(LocalDateTime.now(), taskState.getNextExecutionTime()) : Long.MAX_VALUE);
+			taskAux.setHasReadyTask(taskState.getNextExecutionTime() != null && ChronoUnit.SECONDS.between(LocalDateTime.now(), taskState.getNextExecutionTime()) <= 0);
+			taskAux.setNearestMinutesUntilExecution(taskState.getNextExecutionTime() != null ? ChronoUnit.SECONDS.between(LocalDateTime.now(), taskState.getNextExecutionTime()) : Long.MAX_VALUE);
 
 			FXCollections.sort(dataList, TASK_AUX_COMPARATOR);
 
