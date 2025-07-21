@@ -286,10 +286,27 @@ public class TaskQueue {
 		EmulatorManager.getInstance().releaseEmulatorSlot();
 	}
 
-	private void encolarNuevaTarea() {
+        private void encolarNuevaTarea() {
+                try {
+                        EmulatorManager.getInstance().adquireEmulatorSlot(profile.getId(), (thread, position) -> {
+                                ServProfiles.getServices().notifyProfileStatusChange(new DTOProfileStatus(profile.getId(),
+                                                "Waiting for slot, position:" + position));
+                        });
+
+                        if (!isTaskScheduled(TpDailyTaskEnum.INITIALIZE)) {
+                                addTask(new InitializeTask(profile, TpDailyTaskEnum.INITIALIZE));
+                        }
+
+                        ServLogs.getServices().appendLog(EnumTpMessageSeverity.INFO, "TaskQueue",
+                                        profile.getName(), "Initialization task enqueued after idle");
+                } catch (InterruptedException e) {
+                        logger.error("Interrupted while acquiring emulator slot for profile " + profile.getName(), e);
+                        Thread.currentThread().interrupt();
+                }
+        }
 
 
-	/**
+        /**
 	 * Detiene inmediatamente el procesamiento de la cola, sin importar en qué estado esté.
 	 */
 	public void stop() {
