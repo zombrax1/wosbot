@@ -33,7 +33,11 @@ import org.slf4j.LoggerFactory;
 public class TaskQueue {
 
 
-	private static final Logger logger = LoggerFactory.getLogger(TaskQueue.class);
+    private static final Logger logger = LoggerFactory.getLogger(TaskQueue.class);
+    /**
+     * Delay between idle status updates while the queue is paused.
+     */
+    private static final long IDLE_WAIT_MS = 999L;
 	private final PriorityBlockingQueue<DelayedTask> taskQueue = new PriorityBlockingQueue<>();
 	// Bandera para detener el loop del scheduler.
 	private volatile boolean running = false;
@@ -265,7 +269,7 @@ public class TaskQueue {
 						}
 
 						ServProfiles.getServices().notifyProfileStatusChange(new DTOProfileStatus(profile.getId(), "Idling for " + formattedTime + "\nNext task: " + (taskQueue.isEmpty() ? "None" : taskQueue.peek().getTaskName())));
-						Thread.sleep(999);
+                                                Thread.sleep(IDLE_WAIT_MS);
 					} catch (InterruptedException e) {
 						Thread.currentThread().interrupt();
 						break;
@@ -286,10 +290,27 @@ public class TaskQueue {
 		EmulatorManager.getInstance().releaseEmulatorSlot();
 	}
 
-	private void encolarNuevaTarea() {
+        private void encolarNuevaTarea() {
+                try {
+                        EmulatorManager.getInstance().adquireEmulatorSlot(profile.getId(), (thread, position) -> {
+                                ServProfiles.getServices().notifyProfileStatusChange(new DTOProfileStatus(profile.getId(),
+                                                "Waiting for slot, position:" + position));
+                        });
+
+                        if (!isTaskScheduled(TpDailyTaskEnum.INITIALIZE)) {
+                                addTask(new InitializeTask(profile, TpDailyTaskEnum.INITIALIZE));
+                        }
+
+                        ServLogs.getServices().appendLog(EnumTpMessageSeverity.INFO, "TaskQueue",
+                                        profile.getName(), "Initialization task enqueued after idle");
+                } catch (InterruptedException e) {
+                        logger.error("Interrupted while acquiring emulator slot for profile " + profile.getName(), e);
+                        Thread.currentThread().interrupt();
+                }
+        }
 
 
-	/**
+        /**
 	 * Detiene inmediatamente el procesamiento de la cola, sin importar en qué estado esté.
 	 */
 	public void stop() {
