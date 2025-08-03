@@ -1,5 +1,6 @@
 package cl.camodev.wosbot.profile.controller;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,7 @@ import cl.camodev.wosbot.profile.view.BulkUpdateDialogController;
 import cl.camodev.wosbot.profile.view.EditProfileController;
 import cl.camodev.wosbot.profile.view.NewProfileLayoutController;
 import cl.camodev.wosbot.profile.view.ProfileManagerLayoutController;
+import cl.camodev.utiles.ProfileIO;
 import cl.camodev.wosbot.serv.IProfileStatusChangeListener;
 import cl.camodev.wosbot.serv.impl.ServLogs;
 import javafx.fxml.FXMLLoader;
@@ -32,6 +34,7 @@ import javafx.stage.Stage;
 public class ProfileManagerActionController implements IProfileStatusChangeListener {
         private static final double EDIT_DIALOG_MIN_WIDTH = 600;
         private static final double EDIT_DIALOG_MIN_HEIGHT = 400;
+        private static final String MODULE_NAME = "Profile Manager";
 
         private final ProfileManagerLayoutController profileManagerLayoutController;
 
@@ -104,10 +107,10 @@ public class ProfileManagerActionController implements IProfileStatusChangeListe
 	 * Updates only the selected profiles with settings from the template profile.
 	 * This method allows for selective bulk updates instead of updating all profiles.
 	 */
-	public boolean bulkUpdateSelectedProfiles(ProfileAux templateProfile, List<ProfileAux> selectedProfiles) {
-		if (templateProfile == null || selectedProfiles == null || selectedProfiles.isEmpty()) {
-			return false;
-		}
+        public boolean bulkUpdateSelectedProfiles(ProfileAux templateProfile, List<ProfileAux> selectedProfiles) {
+                if (templateProfile == null || selectedProfiles == null || selectedProfiles.isEmpty()) {
+                        return false;
+                }
 
 		try {
 			boolean allUpdatesSuccessful = true;
@@ -126,7 +129,7 @@ public class ProfileManagerActionController implements IProfileStatusChangeListe
 						targetProfile.setConfig(configKey, configValue);
 					} catch (IllegalArgumentException e) {
 						// If the config name is not a valid enum value, skip it
-						ServLogs.getServices().appendLog(EnumTpMessageSeverity.WARNING, "Profile Manager", "-",
+                                        ServLogs.getServices().appendLog(EnumTpMessageSeverity.WARNING, MODULE_NAME, "-",
 							"Skipping unknown configuration: " + configName + " for profile: " + targetProfile.getName());
 					}
 				}
@@ -135,10 +138,10 @@ public class ProfileManagerActionController implements IProfileStatusChangeListe
 				boolean saveResult = saveProfile(targetProfile);
 				if (!saveResult) {
 					allUpdatesSuccessful = false;
-					ServLogs.getServices().appendLog(EnumTpMessageSeverity.ERROR, "Profile Manager", "-",
+                                    ServLogs.getServices().appendLog(EnumTpMessageSeverity.ERROR, MODULE_NAME, "-",
 						"Failed to update profile: " + targetProfile.getName());
 				} else {
-					ServLogs.getServices().appendLog(EnumTpMessageSeverity.INFO, "Profile Manager", "-",
+                                    ServLogs.getServices().appendLog(EnumTpMessageSeverity.INFO, MODULE_NAME, "-",
 						"Successfully updated profile: " + targetProfile.getName() + " with template from: " + templateProfile.getName());
 				}
 			}
@@ -146,16 +149,74 @@ public class ProfileManagerActionController implements IProfileStatusChangeListe
 			return allUpdatesSuccessful;
 
             } catch (Exception e) {
-                    ServLogs.getServices().appendLog(EnumTpMessageSeverity.ERROR, "Profile Manager", "-",
+                    ServLogs.getServices().appendLog(EnumTpMessageSeverity.ERROR, MODULE_NAME, "-",
                             "Error during bulk update of selected profiles: " + e.getMessage());
                     return false;
             }
-	}
+        }
 
-	@Override
-	public void onProfileStatusChange(DTOProfileStatus status) {
-		if (status != null) {
-			profileManagerLayoutController.handleProfileStatusChange(status);
+       public boolean exportProfiles(File file) {
+               try {
+                       List<DTOProfiles> profiles = iModel.getProfiles();
+                       ProfileIO.writeProfiles(profiles, file.toPath());
+                       return true;
+               } catch (Exception e) {
+                       ServLogs.getServices().appendLog(EnumTpMessageSeverity.ERROR, MODULE_NAME, "-",
+                                       "Export failed: " + e.getMessage());
+                       return false;
+               }
+       }
+
+       public boolean importProfiles(File file) {
+               try {
+                       List<DTOProfiles> profiles = ProfileIO.readProfiles(file.toPath());
+                       if (profiles == null) {
+                               return false;
+                       }
+                       List<DTOProfiles> existing = iModel.getProfiles();
+                       for (DTOProfiles profile : profiles) {
+                               if (!isProfileValid(profile)) {
+                                       ServLogs.getServices().appendLog(EnumTpMessageSeverity.WARNING, MODULE_NAME, "-",
+                                                       "Invalid profile skipped: " + profile);
+                                       continue;
+                               }
+                               DTOProfiles match = existing.stream()
+                                               .filter(p -> p.getName().equalsIgnoreCase(profile.getName()))
+                                               .findFirst().orElse(null);
+                               if (match != null) {
+                                       profile.setId(match.getId());
+                                       iModel.saveProfile(profile);
+                               } else {
+                                       boolean added = iModel.addProfile(profile);
+                                       if (added) {
+                                               existing = iModel.getProfiles();
+                                               DTOProfiles addedProfile = existing.stream()
+                                                               .filter(p -> p.getName().equalsIgnoreCase(profile.getName()))
+                                                               .findFirst().orElse(null);
+                                               if (addedProfile != null) {
+                                                       profile.setId(addedProfile.getId());
+                                                       iModel.saveProfile(profile);
+                                               }
+                                       }
+                               }
+                       }
+                       return true;
+               } catch (Exception e) {
+                       ServLogs.getServices().appendLog(EnumTpMessageSeverity.ERROR, MODULE_NAME, "-",
+                                       "Import failed: " + e.getMessage());
+                       return false;
+               }
+       }
+
+       private boolean isProfileValid(DTOProfiles profile) {
+               return profile != null && profile.getName() != null && profile.getEmulatorNumber() != null
+                               && profile.getEnabled() != null;
+       }
+
+        @Override
+        public void onProfileStatusChange(DTOProfileStatus status) {
+                if (status != null) {
+                        profileManagerLayoutController.handleProfileStatusChange(status);
 
 		}
 
@@ -181,7 +242,7 @@ public class ProfileManagerActionController implements IProfileStatusChangeListe
 
 			newProfileStage.showAndWait();
                 } catch (IOException e) {
-                        ServLogs.getServices().appendLog(EnumTpMessageSeverity.ERROR, "Profile Manager", "-", "Error loading FXML " + e.getMessage());
+                        ServLogs.getServices().appendLog(EnumTpMessageSeverity.ERROR, MODULE_NAME, "-", "Error loading FXML " + e.getMessage());
                 }
 	}
 
@@ -271,7 +332,7 @@ public class ProfileManagerActionController implements IProfileStatusChangeListe
 			}
 
                 } catch (Exception e) {
-                        ServLogs.getServices().appendLog(EnumTpMessageSeverity.ERROR, "Profile Manager", "-",
+                        ServLogs.getServices().appendLog(EnumTpMessageSeverity.ERROR, MODULE_NAME, "-",
                                 "Failed to open bulk update dialog: " + e.getMessage());
                         showAlert(AlertType.ERROR, "ERROR",
                                 "Failed to open bulk update dialog: " + e.getMessage());
@@ -328,7 +389,7 @@ public class ProfileManagerActionController implements IProfileStatusChangeListe
 			}
 
                 } catch (Exception e) {
-                        ServLogs.getServices().appendLog(EnumTpMessageSeverity.ERROR, "Profile Manager", "-",
+                        ServLogs.getServices().appendLog(EnumTpMessageSeverity.ERROR, MODULE_NAME, "-",
                                 "Failed to open edit profile dialog: " + e.getMessage());
                         showAlert(Alert.AlertType.ERROR, "ERROR",
                                 "Failed to open edit profile dialog: " + e.getMessage());
