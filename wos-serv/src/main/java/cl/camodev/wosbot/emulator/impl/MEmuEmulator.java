@@ -25,24 +25,24 @@ public class MEmuEmulator extends Emulator {
 
 	@Override
 	public void launchEmulator(String emulatorNumber) {
-		String[] command = { consolePath + File.separator + "memuc", "start", "-i", emulatorNumber };
-		executeCommand(command);
-		logger.info("MEmu launched at index " + emulatorNumber);
+                String[] command = { consolePath + File.separator + "memuc", "start", "-i", emulatorNumber };
+                runCommand(command);
+                logger.info("MEmu launched at index " + emulatorNumber);
 	}
 
 	@Override
 	public void closeEmulator(String emulatorNumber) {
-		String[] command = { consolePath + File.separator + "memuc", "stop", "-i", emulatorNumber };
-		executeCommand(command);
-		logger.info("MEmu closed at index " + emulatorNumber);
+                String[] command = { consolePath + File.separator + "memuc", "stop", "-i", emulatorNumber };
+                runCommand(command);
+                logger.info("MEmu closed at index " + emulatorNumber);
 	}
 
 	@Override
 	public boolean isRunning(String emulatorNumber) {
 		try {
 			String[] command = { consolePath + File.separator + "memuc", "isvmrunning", "-i", emulatorNumber };
-			ProcessBuilder pb = new ProcessBuilder(command);
-			pb.directory(new File(consolePath).getParentFile());
+                        ProcessBuilder pb = createProcessBuilder(command);
+                        pb.directory(new File(consolePath).getParentFile());
 
 			Process process = pb.start();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -61,14 +61,5 @@ public class MEmuEmulator extends Emulator {
 		return false;
 	}
 
-	private void executeCommand(String[] command) {
-		try {
-			ProcessBuilder pb = new ProcessBuilder(command);
-			pb.directory(new File(consolePath).getParentFile());
-			Process process = pb.start();
-			process.waitFor();
-		} catch (IOException | InterruptedException e) {
-			logger.error("Error executing command", e);
-		}
-	}
+        // Command execution handled by base class
 }

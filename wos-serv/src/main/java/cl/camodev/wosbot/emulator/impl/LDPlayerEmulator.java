@@ -27,14 +27,14 @@ public class LDPlayerEmulator extends Emulator {
     @Override
     public void launchEmulator(String emulatorNumber) {
         String[] command = { consolePath + File.separator + "ldconsole.exe", "launch", "--index", emulatorNumber };
-        executeCommand(command);
+        runCommand(command);
         logger.info("LDPlayer launched at index {}", emulatorNumber);
     }
 
     @Override
     public void closeEmulator(String emulatorNumber) {
         String[] command = { consolePath + File.separator + "ldconsole.exe", "quit", "--index", emulatorNumber };
-        executeCommand(command);
+        runCommand(command);
         logger.info("LDPlayer closed at index {}", emulatorNumber);
     }
 
@@ -42,7 +42,7 @@ public class LDPlayerEmulator extends Emulator {
     public boolean isRunning(String emulatorNumber) {
         try {
             String[] command = { consolePath + File.separator + "ldconsole.exe", "isrunning", "--index", emulatorNumber };
-            ProcessBuilder pb = new ProcessBuilder(command);
+            ProcessBuilder pb = createProcessBuilder(command);
             pb.directory(new File(consolePath).getParentFile());
 
             Process process = pb.start();
@@ -58,14 +58,5 @@ public class LDPlayerEmulator extends Emulator {
         return false;
     }
 
-    private void executeCommand(String[] command) {
-        try {
-            ProcessBuilder pb = new ProcessBuilder(command);
-            pb.directory(new File(consolePath).getParentFile());
-            Process process = pb.start();
-            process.waitFor();
-        } catch (IOException | InterruptedException e) {
-            logger.error("Error executing command", e);
-        }
-    }
+    // Command execution handled by base class
 }

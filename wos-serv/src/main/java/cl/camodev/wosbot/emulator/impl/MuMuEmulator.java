@@ -25,15 +25,15 @@ public class MuMuEmulator extends Emulator {
 
 	@Override
 	public void launchEmulator(String emulatorNumber) {
-		String[] command = { consolePath + File.separator + "MuMuManager.exe", "api", "-v", emulatorNumber, "launch_player" };
-		executeCommand(command);
+                String[] command = { consolePath + File.separator + "MuMuManager.exe", "api", "-v", emulatorNumber, "launch_player" };
+                runCommand(command);
         logger.info("MuMu launched at index {}", emulatorNumber);
 	}
 
 	@Override
 	public void closeEmulator(String emulatorNumber) {
-		String[] command = { consolePath + File.separator + "MuMuManager.exe", "api", "-v", emulatorNumber, "shutdown_player" };
-		executeCommand(command);
+                String[] command = { consolePath + File.separator + "MuMuManager.exe", "api", "-v", emulatorNumber, "shutdown_player" };
+                runCommand(command);
         logger.info("MuMu closed at index {}", emulatorNumber);
 	}
 
@@ -41,8 +41,8 @@ public class MuMuEmulator extends Emulator {
 	public boolean isRunning(String emulatorNumber) {
 		try {
 			String[] command = { consolePath + File.separator + "MuMuManager.exe", "api", "-v", emulatorNumber, "player_state" };
-			ProcessBuilder pb = new ProcessBuilder(command);
-			pb.directory(new File(consolePath).getParentFile());
+                        ProcessBuilder pb = createProcessBuilder(command);
+                        pb.directory(new File(consolePath).getParentFile());
 
 			Process process = pb.start();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -61,14 +61,5 @@ public class MuMuEmulator extends Emulator {
 		return false;
 	}
 
-	private void executeCommand(String[] command) {
-		try {
-			ProcessBuilder pb = new ProcessBuilder(command);
-			pb.directory(new File(consolePath).getParentFile());
-			Process process = pb.start();
-			process.waitFor();
-		} catch (IOException | InterruptedException e) {
-			logger.error("Error executing command", e);
-		}
-	}
+        // Command execution handled by base class
 }

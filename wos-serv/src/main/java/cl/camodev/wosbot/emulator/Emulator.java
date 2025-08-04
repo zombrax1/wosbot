@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
@@ -44,7 +45,7 @@ public abstract class Emulator {
 	protected static final int INIT_DELAY_MS = 500;
 	private static final Logger logger = LoggerFactory.getLogger(Emulator.class);
 	protected String consolePath;
-	protected AndroidDebugBridge bridge = null;
+        protected AndroidDebugBridge bridge = null;
 
 	public Emulator(String consolePath) {
 		this.consolePath = consolePath;
@@ -54,19 +55,55 @@ public abstract class Emulator {
 	/**
 	 * Initializes the ddmlib bridge for ADB communication.
 	 */
-	protected void initializeBridge() {
-		if (bridge == null) {
-			AndroidDebugBridge.disconnectBridge(5000, TimeUnit.MILLISECONDS);
-			AndroidDebugBridge.terminate();
-			AndroidDebugBridge.init(false);
-			bridge = AndroidDebugBridge.createBridge(this.consolePath+ File.separator + "adb.exe", true, 5000, TimeUnit.MILLISECONDS);
-		}
-	}
+        protected void initializeBridge() {
+                if (bridge == null) {
+                        AndroidDebugBridge.disconnectBridge(5000, TimeUnit.MILLISECONDS);
+                        AndroidDebugBridge.terminate();
+                        AndroidDebugBridge.init(false);
+                        bridge = AndroidDebugBridge.createBridge(this.consolePath+ File.separator + "adb.exe", true, 5000, TimeUnit.MILLISECONDS);
+                }
+        }
 
-	/**
-	 * Gets the device serial for the given emulator number.
-	 * Must be implemented by subclasses.
-	 * @param emulatorNumber Emulator identifier
+       /**
+        * Builds a ProcessBuilder that hides console windows on Windows systems.
+        * @param command Command and arguments to execute
+        * @return Configured ProcessBuilder
+        */
+       protected ProcessBuilder createProcessBuilder(String[] command) {
+               if (isWindows()) {
+                       String psCommand = Arrays.stream(command)
+                                       .map(arg -> "\"" + arg.replace("\"", "\\\"") + "\"")
+                                       .collect(Collectors.joining(" "));
+                       return new ProcessBuilder("powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", psCommand);
+               }
+               return new ProcessBuilder(command);
+       }
+
+       private boolean isWindows() {
+               return System.getProperty("os.name").toLowerCase().contains("win");
+       }
+
+       /**
+        * Executes the given command waiting for its completion.
+        * The command runs without showing additional console windows on Windows.
+        * @param command Command and arguments to execute
+        */
+       protected void runCommand(String[] command) {
+               try {
+                       ProcessBuilder pb = createProcessBuilder(command);
+                       pb.directory(new File(consolePath).getParentFile());
+                       Process process = pb.start();
+                       process.waitFor();
+               } catch (IOException | InterruptedException e) {
+                       logger.error("Error executing command", e);
+                       Thread.currentThread().interrupt();
+               }
+       }
+
+        /**
+         * Gets the device serial for the given emulator number.
+         * Must be implemented by subclasses.
+         * @param emulatorNumber Emulator identifier
 	 * @return Device serial string
 	 */
 	protected abstract String getDeviceSerial(String emulatorNumber);
@@ -155,9 +192,9 @@ public abstract class Emulator {
 			String address = extractAddressFromSerial(serial);
             logger.info("Attempting to connect to: {}", address);
 
-			String adbPath = this.consolePath+ File.separator + "adb.exe";
-			ProcessBuilder pb = new ProcessBuilder(adbPath, "connect", address);
-			pb.directory(new File(adbPath).getParentFile());
+                        String adbPath = this.consolePath+ File.separator + "adb.exe";
+                        ProcessBuilder pb = createProcessBuilder(new String[]{adbPath, "connect", address});
+                        pb.directory(new File(adbPath).getParentFile());
 
 			Process process = pb.start();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
