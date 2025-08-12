@@ -8,6 +8,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.sql.Statement;
+
+import org.hibernate.Session;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -61,18 +64,14 @@ public final class BotPersistence {
         private void configureSQLite() {
                 EntityManager entityManager = getEntityManager();
                 try {
-                        entityManager.getTransaction().begin();
-                        // PRAGMA statements return a result set; executing them as updates
-                        // triggers "Query returns results" warnings. Fetch the results instead
-                        // to apply the configuration without errors.
-                        entityManager.createNativeQuery(PRAGMA_JOURNAL_MODE_WAL).getResultList();
-                        entityManager.createNativeQuery(PRAGMA_SYNC_NORMAL).getResultList();
-                        entityManager.getTransaction().commit();
+                        entityManager.unwrap(Session.class).doWork(connection -> {
+                                try (Statement statement = connection.createStatement()) {
+                                        statement.execute(PRAGMA_JOURNAL_MODE_WAL);
+                                        statement.execute(PRAGMA_SYNC_NORMAL);
+                                }
+                        });
                 } catch (Exception e) {
                         System.err.println("Error configuring SQLite: " + e.getMessage());
-                        if (entityManager.getTransaction().isActive()) {
-                                entityManager.getTransaction().rollback();
-                        }
                 } finally {
                         entityManager.close();
                 }
