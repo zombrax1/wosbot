@@ -62,8 +62,11 @@ public final class BotPersistence {
                 EntityManager entityManager = getEntityManager();
                 try {
                         entityManager.getTransaction().begin();
-                        entityManager.createNativeQuery(PRAGMA_JOURNAL_MODE_WAL).executeUpdate();
-                        entityManager.createNativeQuery(PRAGMA_SYNC_NORMAL).executeUpdate();
+                        // PRAGMA statements return a result set; executing them as updates
+                        // triggers "Query returns results" warnings. Fetch the results instead
+                        // to apply the configuration without errors.
+                        entityManager.createNativeQuery(PRAGMA_JOURNAL_MODE_WAL).getResultList();
+                        entityManager.createNativeQuery(PRAGMA_SYNC_NORMAL).getResultList();
                         entityManager.getTransaction().commit();
                 } catch (Exception e) {
                         System.err.println("Error configuring SQLite: " + e.getMessage());
