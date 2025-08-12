@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -17,7 +18,6 @@ import cl.camodev.wosbot.ot.DTOImageSearchResult;
 import cl.camodev.wosbot.ot.DTOPoint;
 import cl.camodev.wosbot.ot.DTOProfiles;
 import cl.camodev.wosbot.serv.impl.ServConfig;
-import cl.camodev.wosbot.serv.task.TaskQueue;
 import cl.camodev.wosbot.serv.task.WaitingThread;
 import net.sourceforge.tess4j.TesseractException;
 import org.slf4j.Logger;
@@ -25,26 +25,31 @@ import org.slf4j.LoggerFactory;
 
 public class EmulatorManager {
 
-	private static final Logger logger = LoggerFactory.getLogger(EmulatorManager.class);
+        private static final Logger logger = LoggerFactory.getLogger(EmulatorManager.class);
 
-	public static String WHITEOUT_PACKAGE = "com.gof.global";
-	private static EmulatorManager instance;
-	private final ReentrantLock lock = new ReentrantLock();
-	private final Condition permitsAvailable = lock.newCondition();
-	private final PriorityQueue<WaitingThread> waitingQueue = new PriorityQueue<>();
-	private Emulator emulator;
-	private int MAX_RUNNING_EMULATORS = 3;
+        private static final String WHITEOUT_PACKAGE_NAME = "com.gof.global";
+        private static volatile EmulatorManager instance;
+        private final ReentrantLock lock = new ReentrantLock();
+        private final Condition permitsAvailable = lock.newCondition();
+        private final PriorityQueue<WaitingThread> waitingQueue = new PriorityQueue<>();
+        private final AtomicInteger availableEmulatorSlots = new AtomicInteger();
+        private Emulator emulator;
+        private int maxRunningEmulators = 3;
 
-	private EmulatorManager() {
+        private EmulatorManager() {
 
-	}
+        }
 
-	public static EmulatorManager getInstance() {
-		if (instance == null) {
-			instance = new EmulatorManager();
-		}
-		return instance;
-	}
+        public static EmulatorManager getInstance() {
+                if (instance == null) {
+                        synchronized (EmulatorManager.class) {
+                                if (instance == null) {
+                                        instance = new EmulatorManager();
+                                }
+                        }
+                }
+                return instance;
+        }
 
 	public void initialize() {
 		resetQueueState();
@@ -59,7 +64,12 @@ public class EmulatorManager {
 		if (savedActiveEmulator == null) {
 			throw new IllegalStateException("No active emulator set. Ensure an emulator is selected.");
 		}
-		MAX_RUNNING_EMULATORS = Optional.ofNullable(globalConfig.get(EnumConfigurationKey.MAX_RUNNING_EMULATORS_INT.name())).map(Integer::parseInt).orElse(Integer.parseInt(EnumConfigurationKey.MAX_RUNNING_EMULATORS_INT.getDefaultValue()));
+                maxRunningEmulators = Optional.ofNullable(
+                                globalConfig.get(EnumConfigurationKey.MAX_RUNNING_EMULATORS_INT.name()))
+                                .map(Integer::parseInt)
+                                .orElse(Integer.parseInt(
+                                                EnumConfigurationKey.MAX_RUNNING_EMULATORS_INT.getDefaultValue()));
+                availableEmulatorSlots.set(maxRunningEmulators);
 		try {
 			EmulatorType emulatorType = EmulatorType.valueOf(savedActiveEmulator);
 			String consolePath = globalConfig.get(emulatorType.getConfigKey());
@@ -143,10 +153,14 @@ public class EmulatorManager {
         /**
          * Checks if an application is installed on the emulator.
          */
-	public boolean isWhiteoutSurvivalInstalled(String emulatorNumber) {
-		checkEmulatorInitialized();
-		return emulator.isAppInstalled(emulatorNumber, WHITEOUT_PACKAGE);
-	}
+        public boolean isWhiteoutSurvivalInstalled(String emulatorNumber) {
+                checkEmulatorInitialized();
+                return emulator.isAppInstalled(emulatorNumber, WHITEOUT_PACKAGE_NAME);
+        }
+
+        public static String getWhiteoutPackageName() {
+                return WHITEOUT_PACKAGE_NAME;
+        }
 
         /**
          * Presses the back button on the emulator.
@@ -223,12 +237,12 @@ public class EmulatorManager {
 		lock.lock();
 		try {
                         // If a slot is available and nobody is waiting, acquire it immediately.
-			logger.info("Profile " + profile.getName() + " is getting queue slot.");
-			if (MAX_RUNNING_EMULATORS > 0 && waitingQueue.isEmpty()) {
-				logger.info("Profile " + profile.getName() + " acquired slot immediately.");
-				MAX_RUNNING_EMULATORS--;
-				return;
-			}
+                        logger.info("Profile {} is getting queue slot.", profile.getName());
+                        if (availableEmulatorSlots.get() > 0 && waitingQueue.isEmpty()) {
+                                logger.info("Profile {} acquired slot immediately.", profile.getName());
+                                availableEmulatorSlots.decrementAndGet();
+                                return;
+                        }
 
                         // Create the object representing the current thread and its priority
 			WaitingThread currentWaiting = new WaitingThread(Thread.currentThread(), profile.getId());
@@ -236,18 +250,18 @@ public class EmulatorManager {
 
                         // Wait with timeout in order to notify the position periodically.
 
-			while (waitingQueue.peek() != currentWaiting || MAX_RUNNING_EMULATORS <= 0) {
+                        while (waitingQueue.peek() != currentWaiting || availableEmulatorSlots.get() <= 0) {
                                 // Wait up to 1 second.
-				permitsAvailable.await(1, TimeUnit.SECONDS);
+                                permitsAvailable.await(1, TimeUnit.SECONDS);
 
                                 // Query and notify the current thread position in the queue.
 				int position = getPosition(currentWaiting);
 				callback.onPositionUpdate(Thread.currentThread(), position);
 			}
-            logger.info("Profile {} acquired slot", profile.getName());
+                        logger.info("Profile {} acquired slot", profile.getName());
                         // It's this thread's turn and a slot is available.
                         waitingQueue.poll(); // Remove the thread from the queue.
-                        MAX_RUNNING_EMULATORS--; // Acquire the slot.
+                        availableEmulatorSlots.decrementAndGet(); // Acquire the slot.
 
                         // Notify all waiting threads to re-evaluate the condition.
 			permitsAvailable.signalAll();
@@ -259,9 +273,9 @@ public class EmulatorManager {
 	public void releaseEmulatorSlot(DTOProfiles profile) {
 		lock.lock();
 		try {
-            logger.info("Profile {} is releasing queue slot.", profile.getName());
-			MAX_RUNNING_EMULATORS++;
-			permitsAvailable.signalAll();
+                        logger.info("Profile {} is releasing queue slot.", profile.getName());
+                        availableEmulatorSlots.incrementAndGet();
+                        permitsAvailable.signalAll();
 		} finally {
 			lock.unlock();
 		}
@@ -281,8 +295,9 @@ public class EmulatorManager {
 	public void resetQueueState() {
 		lock.lock();
 		try {
-			waitingQueue.clear();
-			permitsAvailable.signalAll();
+                        waitingQueue.clear();
+                        availableEmulatorSlots.set(maxRunningEmulators);
+                        permitsAvailable.signalAll();
 		} finally {
 			lock.unlock();
 		}

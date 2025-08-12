@@ -62,7 +62,7 @@ public abstract class DelayedTask implements Runnable, Delayed, Comparable<Delay
             return;
         }
 
-        if (!EmulatorManager.getInstance().isPackageRunning(EMULATOR_NUMBER, EmulatorManager.WHITEOUT_PACKAGE)) {
+        if (!EmulatorManager.getInstance().isPackageRunning(EMULATOR_NUMBER, EmulatorManager.getWhiteoutPackageName())) {
             throw new HomeNotFoundException("Game is not running");
         }
 

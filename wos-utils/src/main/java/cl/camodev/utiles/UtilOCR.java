@@ -12,6 +12,9 @@ import net.sourceforge.tess4j.TesseractException;
 
 public class UtilOCR {
 
+        private static final String DEFAULT_TESSDATA_PATH = System.getProperty("tesseract.datapath", "/lib/tesseract");
+        private static final String DEFAULT_LANGUAGE = System.getProperty("tesseract.language", "eng");
+
         /**
          * Performs OCR on a specific region of an image.
          *
@@ -47,11 +50,9 @@ public class UtilOCR {
 		BufferedImage subImage = image.getSubimage(x, y, width, height);
 
                 // Configure Tesseract
-		Tesseract tesseract = new Tesseract();
-                // Set the path to the tessdata folder
-		tesseract.setDatapath("/lib/tesseract");
-                // Set the language (e.g. "eng")
-		tesseract.setLanguage("eng");
+                Tesseract tesseract = new Tesseract();
+                tesseract.setDatapath(DEFAULT_TESSDATA_PATH);
+                tesseract.setLanguage(DEFAULT_LANGUAGE);
 
                 // Run OCR on the subimage and return the result
 		return tesseract.doOCR(subImage);

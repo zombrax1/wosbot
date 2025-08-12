@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 
 /** Minimal thread-safe event bus implementation. */
 public class SimpleEventBus implements EventBus {
-    private final Map<Class<?>, CopyOnWriteArrayList<Consumer<?>>> listeners =
+    private final Map<Class<?>, List<Consumer<?>>> listeners =
             new ConcurrentHashMap<>();
 
     @Override
@@ -27,7 +27,7 @@ public class SimpleEventBus implements EventBus {
     @Override
     public void post(Object event) {
         for (Consumer<?> c :
-                listeners.getOrDefault(event.getClass(), new CopyOnWriteArrayList<>())) {
+                listeners.getOrDefault(event.getClass(), List.of())) {
             @SuppressWarnings("unchecked")
             Consumer<Object> consumer = (Consumer<Object>) c;
             consumer.accept(event);
