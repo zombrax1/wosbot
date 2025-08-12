@@ -79,34 +79,34 @@ public class DTOProfiles {
 
 	}
 
-	/**
-	 * Obtiene el valor de una configuración específica utilizando EnumConfigurationKey. Es un método genérico que devuelve el tipo correcto
-	 * basado en la clave.
-	 */
-	public <T> T getConfig(EnumConfigurationKey key, Class<T> clazz) {
-		Optional<DTOConfig> configOptional = configs.stream().filter(config -> config.getNombreConfiguracion().equalsIgnoreCase(key.name())).findFirst();
+        /**
+         * Retrieves the value for a specific configuration using {@link EnumConfigurationKey}.
+         * This generic method returns the correct type based on the key.
+         */
+        public <T> T getConfig(EnumConfigurationKey key, Class<T> clazz) {
+                Optional<DTOConfig> configOptional = configs.stream().filter(config -> config.getKey().equalsIgnoreCase(key.name())).findFirst();
 
-		if (!configOptional.isPresent()) {
+                if (!configOptional.isPresent()) {
 
-			DTOConfig defaultConfig = new DTOConfig(-1L, key.name(), key.getDefaultValue());
-			configs.add(defaultConfig);
-		}
-		String valor = configOptional.map(DTOConfig::getValor).orElse(key.getDefaultValue());
+                        DTOConfig defaultConfig = new DTOConfig(-1L, key.name(), key.getDefaultValue());
+                        configs.add(defaultConfig);
+                }
+                String value = configOptional.map(DTOConfig::getValue).orElse(key.getDefaultValue());
 
-		return key.castValue(valor);
-	}
+                return key.castValue(value);
+        }
 
-	public <T> void setConfig(EnumConfigurationKey key, T value) {
-		String valorAAlmacenar = value.toString();
-		Optional<DTOConfig> configOptional = configs.stream().filter(config -> config.getNombreConfiguracion().equalsIgnoreCase(key.name())).findFirst();
+        public <T> void setConfig(EnumConfigurationKey key, T value) {
+                String valueToStore = value.toString();
+                Optional<DTOConfig> configOptional = configs.stream().filter(config -> config.getKey().equalsIgnoreCase(key.name())).findFirst();
 
-		if (configOptional.isPresent()) {
-			configOptional.get().setValor(valorAAlmacenar);
-		} else {
-			DTOConfig nuevaConfig = new DTOConfig(getId(), key.name(), valorAAlmacenar);
-			configs.add(nuevaConfig);
-		}
-	}
+                if (configOptional.isPresent()) {
+                        configOptional.get().setValue(valueToStore);
+                } else {
+                        DTOConfig newConfig = new DTOConfig(getId(), key.name(), valueToStore);
+                        configs.add(newConfig);
+                }
+        }
 
 	public String getStatus() {
 		return status;

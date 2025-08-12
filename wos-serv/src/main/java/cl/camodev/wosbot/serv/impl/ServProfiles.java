@@ -52,9 +52,9 @@ public class ServProfiles implements IServProfile {
 		List<Config> configs = iConfigRepository.getGlobalConfigs();
 		if (configs != null) {
 			HashMap<EnumConfigurationKey, String> settings = new HashMap<EnumConfigurationKey, String>();
-			for (Config config : configs) {
-				settings.put(EnumConfigurationKey.valueOf(config.getKey()), config.getValor());
-			}
+                        for (Config config : configs) {
+                                settings.put(EnumConfigurationKey.valueOf(config.getKey()), config.getValue());
+                        }
 			return settings;
 		} else {
 			return null;
@@ -114,7 +114,7 @@ public class ServProfiles implements IServProfile {
 				return false;
 			}
 
-			List<Config> newConfigs = profileDTO.getConfigs().stream().map(dtoConfig -> new Config(existingProfile, tpConfig, dtoConfig.getNombreConfiguracion(), dtoConfig.getValor())).collect(Collectors.toList());
+                        List<Config> newConfigs = profileDTO.getConfigs().stream().map(dtoConfig -> new Config(existingProfile, tpConfig, dtoConfig.getKey(), dtoConfig.getValue())).collect(Collectors.toList());
 
 			newConfigs.forEach(config -> iConfigRepository.addConfig(config));
 

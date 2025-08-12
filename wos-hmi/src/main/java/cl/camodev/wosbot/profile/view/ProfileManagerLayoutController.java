@@ -351,9 +351,9 @@ public class ProfileManagerLayoutController implements IProfileChangeObserver {
 				profiles.clear();
 				dtoProfiles.forEach(dtoProfile -> {
 					ProfileAux profileAux = new ProfileAux(dtoProfile.getId(), dtoProfile.getName(), dtoProfile.getEmulatorNumber(), dtoProfile.getEnabled(), "NOT RUNNING");
-					dtoProfile.getConfigs().forEach(config -> {
-						profileAux.getConfigs().add(new ConfigAux(config.getNombreConfiguracion(), config.getValor()));
-					});
+                                        dtoProfile.getConfigs().forEach(config -> {
+                                                profileAux.getConfigs().add(new ConfigAux(config.getKey(), config.getValue()));
+                                        });
 					profiles.add(profileAux);
 				});
 

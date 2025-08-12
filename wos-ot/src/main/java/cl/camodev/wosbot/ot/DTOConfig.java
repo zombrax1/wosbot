@@ -1,39 +1,39 @@
 package cl.camodev.wosbot.ot;
 
 public class DTOConfig {
-	private Long profileId; // Para saber a qué perfil pertenece
-	private String nombreConfiguracion;
-	private String valor;
+        private Long profileId; // profile identifier
+        private String key;
+        private String value;
 
-	public DTOConfig(Long profileId, String nombreConfiguracion, String valor) {
-		this.profileId = profileId;
-		this.nombreConfiguracion = nombreConfiguracion;
-		this.valor = valor;
-	}
+        public DTOConfig(Long profileId, String key, String value) {
+                this.profileId = profileId;
+                this.key = key;
+                this.value = value;
+        }
 
-	// Getters y Setters
+        // Getters and setters
 
-	public Long getProfileId() {
-		return profileId;
-	}
+        public Long getProfileId() {
+                return profileId;
+        }
 
-	public String getNombreConfiguracion() {
-		return nombreConfiguracion;
-	}
+        public String getKey() {
+                return key;
+        }
 
-	public String getValor() {
-		return valor;
-	}
+        public String getValue() {
+                return value;
+        }
 
-	public void setProfileId(Long profileId) {
-		this.profileId = profileId;
-	}
+        public void setProfileId(Long profileId) {
+                this.profileId = profileId;
+        }
 
-	public void setNombreConfiguracion(String nombreConfiguracion) {
-		this.nombreConfiguracion = nombreConfiguracion;
-	}
+        public void setKey(String key) {
+                this.key = key;
+        }
 
-	public void setValor(String valor) {
-		this.valor = valor;
-	}
+        public void setValue(String value) {
+                this.value = value;
+        }
 }

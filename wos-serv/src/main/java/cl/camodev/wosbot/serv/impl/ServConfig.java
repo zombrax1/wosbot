@@ -31,10 +31,10 @@ public class ServConfig {
 			return null;
 		}
 
-		HashMap<String, String> globalConfig = new HashMap<>();
-		for (Config config : configs) {
-			globalConfig.put(config.getKey(), config.getValor());
-		}
+                HashMap<String, String> globalConfig = new HashMap<>();
+                for (Config config : configs) {
+                        globalConfig.put(config.getKey(), config.getValue());
+                }
 		return globalConfig;
 	}
 

@@ -53,7 +53,7 @@ public class ProfileRepository implements IProfileRepository {
 
 		if (!profileIds.isEmpty()) {
 			// Consulta para obtener las configuraciones de los perfiles
-			String queryConfigs = "SELECT new cl.camodev.wosbot.ot.DTOConfig(c.profile.id, c.key, c.valor) " + "FROM Config c WHERE c.profile.id IN :profileIds";
+                        String queryConfigs = "SELECT new cl.camodev.wosbot.ot.DTOConfig(c.profile.id, c.key, c.value) " + "FROM Config c WHERE c.profile.id IN :profileIds";
 
 			// Pasar parámetros a la consulta
 			Map<String, Object> parameters = new HashMap<>();

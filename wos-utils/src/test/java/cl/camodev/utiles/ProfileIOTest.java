@@ -29,6 +29,6 @@ class ProfileIOTest {
         assertEquals("test", loadedProfile.getName());
         assertEquals("1", loadedProfile.getEmulatorNumber());
         assertTrue(loadedProfile.getEnabled());
-        assertEquals("value", loadedProfile.getConfigs().get(0).getValor());
+        assertEquals("value", loadedProfile.getConfigs().get(0).getValue());
     }
 }

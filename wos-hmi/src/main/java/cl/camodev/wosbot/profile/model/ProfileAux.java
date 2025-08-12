@@ -113,32 +113,32 @@ public class ProfileAux {
 		this.configs = configs;
 	}
 
-	/**
-	 * Obtiene el valor de una configuración específica utilizando EnumConfigurationKey. Es un método genérico que devuelve el tipo correcto
-	 * basado en la clave.
-	 */
-	public <T> T getConfig(EnumConfigurationKey key, Class<T> clazz) {
-		Optional<ConfigAux> configOptional = configs.stream().filter(config -> config.getName().equalsIgnoreCase(key.name())).findFirst();
+        /**
+         * Retrieves the value for a specific configuration using {@link EnumConfigurationKey}.
+         * This generic method returns the correct type based on the key.
+         */
+        public <T> T getConfig(EnumConfigurationKey key, Class<T> clazz) {
+                Optional<ConfigAux> configOptional = configs.stream().filter(config -> config.getName().equalsIgnoreCase(key.name())).findFirst();
 
-		if (!configOptional.isPresent()) {
+                if (!configOptional.isPresent()) {
 
-			ConfigAux defaultConfig = new ConfigAux(key.name(), key.getDefaultValue());
-			configs.add(defaultConfig);
-		}
-		String valor = configOptional.map(ConfigAux::getValue).orElse(key.getDefaultValue());
+                        ConfigAux defaultConfig = new ConfigAux(key.name(), key.getDefaultValue());
+                        configs.add(defaultConfig);
+                }
+                String value = configOptional.map(ConfigAux::getValue).orElse(key.getDefaultValue());
 
-		return key.castValue(valor);
-	}
+                return key.castValue(value);
+        }
 
-	public <T> void setConfig(EnumConfigurationKey key, T value) {
-		String valorAAlmacenar = value.toString();
-		Optional<ConfigAux> configOptional = configs.stream().filter(config -> config.getName().equalsIgnoreCase(key.name())).findFirst();
+        public <T> void setConfig(EnumConfigurationKey key, T value) {
+                String valueToStore = value.toString();
+                Optional<ConfigAux> configOptional = configs.stream().filter(config -> config.getName().equalsIgnoreCase(key.name())).findFirst();
 
-		if (configOptional.isPresent()) {
-			configOptional.get().setValue(valorAAlmacenar);
-		} else {
-			ConfigAux nuevaConfig = new ConfigAux(key.name(), valorAAlmacenar);
-			configs.add(nuevaConfig);
-		}
-	}
+                if (configOptional.isPresent()) {
+                        configOptional.get().setValue(valueToStore);
+                } else {
+                        ConfigAux newConfig = new ConfigAux(key.name(), valueToStore);
+                        configs.add(newConfig);
+                }
+        }
 }

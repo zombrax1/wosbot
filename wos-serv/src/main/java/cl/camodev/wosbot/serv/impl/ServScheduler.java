@@ -320,11 +320,11 @@ public class ServScheduler {
 			TpConfig tpConfig = iConfigRepository.getTpConfig(TpConfigEnum.GLOBAL_CONFIG);
 			config = new Config();
 			config.setKey(enumConfigurationKey);
-			config.setValor(filePath);
+                    config.setValue(filePath);
 			config.setTpConfig(tpConfig);
 			iConfigRepository.addConfig(config);
 		} else {
-			config.setValor(filePath);
+                    config.setValue(filePath);
 			iConfigRepository.saveConfig(config);
 		}
 	}

@@ -35,18 +35,18 @@ public class Config {
 	@Column(name = "config_key", nullable = false)
 	private String key;
 
-	@Column(name = "value", nullable = false)
-	private String valor;
+        @Column(name = "value", nullable = false)
+        private String value;
 
 	public Config() {
 	}
 
-	public Config(Profile profile, TpConfig tpConfig, String key, String valor) {
-		this.profile = profile;
-		this.tpConfig = tpConfig;
-		this.key = key;
-		this.valor = valor;
-	}
+        public Config(Profile profile, TpConfig tpConfig, String key, String value) {
+                this.profile = profile;
+                this.tpConfig = tpConfig;
+                this.key = key;
+                this.value = value;
+        }
 
 	// Getters y Setters
 	public Integer getId() {
@@ -81,16 +81,16 @@ public class Config {
 		this.key = key;
 	}
 
-	public String getValor() {
-		return valor;
-	}
+        public String getValue() {
+                return value;
+        }
 
-	public void setValor(String valor) {
-		this.valor = valor;
-	}
+        public void setValue(String value) {
+                this.value = value;
+        }
 
 	@Override
 	public String toString() {
-		return "Config{" + "id=" + id + ", profile=" + (profile != null ? profile.getId() : "Global") + ", tpConfig=" + tpConfig.getName() + ", key='" + key + '\'' + ", valor='" + valor + '\'' + '}';
-	}
+                return "Config{" + "id=" + id + ", profile=" + (profile != null ? profile.getId() : "Global") + ", tpConfig=" + tpConfig.getName() + ", key='" + key + '\'' + ", value='" + value + '\'' + '}';
+        }
 }
