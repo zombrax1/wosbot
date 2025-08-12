@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -23,17 +24,19 @@ public final class BotPersistence {
         private static final String SQLITE_PREFIX = "jdbc:sqlite:";
         private static final String PRAGMA_JOURNAL_MODE_WAL = "PRAGMA journal_mode=WAL";
         private static final String PRAGMA_SYNC_NORMAL = "PRAGMA synchronous=NORMAL";
-        private static BotPersistence instance;
-        private static EntityManagerFactory entityManagerFactory;
+        private static final Map<String, BotPersistence> INSTANCES = new ConcurrentHashMap<>();
+        private final EntityManagerFactory entityManagerFactory;
+        private final String profile;
 
-        private BotPersistence() {
+        private BotPersistence(String profile) {
+                this.profile = profile;
                 try {
                         Map<String, Object> properties = new HashMap<>();
-                        properties.put(JDBC_URL_PROPERTY, SQLITE_PREFIX + resolveDatabasePath());
+                        properties.put(JDBC_URL_PROPERTY, SQLITE_PREFIX + resolveDatabasePath(profile));
                         entityManagerFactory =
                                         Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME, properties);
                         configureSQLite();
-                        PersistenceDataInitialization.initializeData();
+                        PersistenceDataInitialization.initializeData(this);
                 } catch (Exception ex) {
                         System.err.println("Error inicializando EntityManagerFactory: " + ex.getMessage());
                         throw new ExceptionInInitializerError(ex);
@@ -41,18 +44,15 @@ public final class BotPersistence {
         }
 
         public static BotPersistence getInstance() {
-                if (instance == null) {
-                        synchronized (BotPersistence.class) {
-                                if (instance == null) {
-                                        instance = new BotPersistence();
-                                }
-                        }
-                }
-                return instance;
+                String profile = System.getProperty(PROFILE_PROPERTY, DEFAULT_PROFILE);
+                return getInstance(profile);
         }
 
-        private static String resolveDatabasePath() throws IOException {
-                String profile = System.getProperty(PROFILE_PROPERTY, DEFAULT_PROFILE);
+        public static BotPersistence getInstance(String profile) {
+                return INSTANCES.computeIfAbsent(profile, BotPersistence::new);
+        }
+
+        private static String resolveDatabasePath(String profile) throws IOException {
                 Path directory = Paths.get(DB_FOLDER);
                 Files.createDirectories(directory);
                 return directory.resolve(profile + ".db").toString();
@@ -75,9 +75,9 @@ public final class BotPersistence {
                 }
         }
 
-	private EntityManager getEntityManager() {
-		return entityManagerFactory.createEntityManager();
-	}
+        private EntityManager getEntityManager() {
+                return entityManagerFactory.createEntityManager();
+        }
 
 	public boolean createEntity(Object entity) {
 		EntityManager entityManager = getEntityManager();

@@ -15,7 +15,7 @@ public interface IConfigRepository {
 
 	boolean deleteConfig(Config config);
 
-	Config getConfigById(Long id);
+        Config getConfigById(Long profileId, Long id);
 
 	List<Config> getProfileConfigs(Long profileId);
 

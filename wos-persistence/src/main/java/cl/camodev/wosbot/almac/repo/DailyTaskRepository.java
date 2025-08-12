@@ -7,43 +7,50 @@ import java.util.stream.Collectors;
 
 import cl.camodev.wosbot.almac.entity.DailyTask;
 import cl.camodev.wosbot.almac.entity.TpDailyTask;
-import cl.camodev.wosbot.almac.jpa.BotPersistence;
 import cl.camodev.wosbot.console.enumerable.TpDailyTaskEnum;
 import cl.camodev.wosbot.ot.DTODailyTaskStatus;
 
+import cl.camodev.wosbot.almac.jpa.BotPersistence;
+
 public class DailyTaskRepository implements IDailyTaskRepository {
-	private final BotPersistence persistence = BotPersistence.getInstance();
+        private static DailyTaskRepository instance;
 
-	private static DailyTaskRepository instance;
+        private DailyTaskRepository() {
+        }
 
-	private DailyTaskRepository() {
-	}
+        public static DailyTaskRepository getRepository() {
+                if (instance == null) {
+                        instance = new DailyTaskRepository();
+                }
+                return instance;
+        }
 
-	public static DailyTaskRepository getRepository() {
-		if (instance == null) {
-			instance = new DailyTaskRepository();
-		}
-		return instance;
-	}
+        private BotPersistence getPersistence(Long profileId) {
+                return BotPersistence.getInstance(String.valueOf(profileId));
+        }
 
 	@Override
 	public boolean addDailyTask(DailyTask dailyTask) {
-		return persistence.createEntity(dailyTask);
+                Long profileId = dailyTask.getProfile().getId();
+                return getPersistence(profileId).createEntity(dailyTask);
 	}
 
 	@Override
 	public boolean saveDailyTask(DailyTask dailyTask) {
-		return persistence.updateEntity(dailyTask);
+                Long profileId = dailyTask.getProfile().getId();
+                return getPersistence(profileId).updateEntity(dailyTask);
 	}
 
 	@Override
 	public boolean deleteDailyTask(DailyTask dailyTask) {
-		return persistence.deleteEntity(dailyTask);
+                Long profileId = dailyTask.getProfile().getId();
+                return getPersistence(profileId).deleteEntity(dailyTask);
 	}
 
 	@Override
 	public DailyTask getDailyTaskById(Long id) {
-		return persistence.findEntityById(DailyTask.class, id);
+                // Profile-specific lookup requires profileId; default to global instance
+                return BotPersistence.getInstance().findEntityById(DailyTask.class, id);
 	}
 
 	@Override
@@ -54,7 +61,7 @@ public class DailyTaskRepository implements IDailyTaskRepository {
 		Map<String, Object> parameters = new HashMap<>();
 		parameters.put("profileId", profileId);
 
-		return persistence.getQueryResults(query, DailyTask.class, parameters);
+                return getPersistence(profileId).getQueryResults(query, DailyTask.class, parameters);
 	}
 
 	@Override
@@ -68,7 +75,7 @@ public class DailyTaskRepository implements IDailyTaskRepository {
 		parameters.put("profileId", profileId);
 		parameters.put("id", taskName.getId());
 
-		List<DailyTask> results = persistence.getQueryResults(query, DailyTask.class, parameters);
+                List<DailyTask> results = getPersistence(profileId).getQueryResults(query, DailyTask.class, parameters);
 
 		return results.isEmpty() ? null : results.get(0);
 	}
@@ -85,13 +92,13 @@ public class DailyTaskRepository implements IDailyTaskRepository {
 		Map<String, Object> parameters = new HashMap<>();
 		parameters.put("profileId", profileId);
 
-		List<DTODailyTaskStatus> results = persistence.getQueryResults(query, DTODailyTaskStatus.class, parameters);
+                List<DTODailyTaskStatus> results = getPersistence(profileId).getQueryResults(query, DTODailyTaskStatus.class, parameters);
 
 		return results.stream().collect(Collectors.toMap(DTODailyTaskStatus::getIdTpDailyTask, dto -> dto));
 	}
 
 	@Override
 	public TpDailyTask findTpDailyTaskById(Integer id) {
-		return persistence.findEntityById(TpDailyTask.class, id);
-	}
+                return BotPersistence.getInstance().findEntityById(TpDailyTask.class, id);
+}
 }
