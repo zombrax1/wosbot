@@ -235,7 +235,7 @@ public class ServScheduler {
 	 * @param profileId The profile ID
 	 * @param taskEnum The task to remove
 	 */
-	public void removeTaskFromScheduler(Long profileId, TpDailyTaskEnum taskEnum) {
+        public void removeTaskFromScheduler(Long profileId, TpDailyTaskEnum taskEnum) {
 		try {
 			// Get the task queue for the profile
 			TaskQueue queue = queueManager.getQueue(profileId);
@@ -272,10 +272,46 @@ public class ServScheduler {
 		} catch (Exception e) {
 			ServLogs.getServices().appendLog(EnumTpMessageSeverity.ERROR, "Scheduler",
 				"Profile " + profileId, "Error removing task " + taskEnum.getName() + ": " + e.getMessage());
-		}
-	}
+                }
+        }
 
-	public void saveEmulatorPath(String enumConfigurationKey, String filePath) {
+       public boolean copyDailyTasks(Long sourceProfileId, List<Long> targetProfileIds) {
+               try {
+                       if (sourceProfileId == null || targetProfileIds == null || targetProfileIds.isEmpty()) {
+                               return false;
+                       }
+                       List<DailyTask> sourceTasks = iDailyTaskRepository.findByProfileId(sourceProfileId);
+                       if (sourceTasks == null) {
+                               return false;
+                       }
+                       for (Long targetId : targetProfileIds) {
+                               Profile targetProfile = iProfileRepository.getProfileById(targetId);
+                               if (targetProfile == null) {
+                                       continue;
+                               }
+                               List<DailyTask> existing = iDailyTaskRepository.findByProfileId(targetId);
+                               if (existing != null) {
+                                       for (DailyTask dt : existing) {
+                                               iDailyTaskRepository.deleteDailyTask(dt);
+                                       }
+                               }
+                               for (DailyTask src : sourceTasks) {
+                                       DailyTask copy = new DailyTask();
+                                       copy.setProfile(targetProfile);
+                                       copy.setTask(src.getTask());
+                                       copy.setLastExecution(src.getLastExecution());
+                                       copy.setNextSchedule(src.getNextSchedule());
+                                       iDailyTaskRepository.addDailyTask(copy);
+                               }
+                       }
+                       return true;
+               } catch (Exception e) {
+                       ServLogs.getServices().appendLog(EnumTpMessageSeverity.ERROR, "ServScheduler", "-", "Failed to copy tasks: " + e.getMessage());
+                       return false;
+               }
+       }
+
+        public void saveEmulatorPath(String enumConfigurationKey, String filePath) {
 		List<Config> configs = iConfigRepository.getGlobalConfigs();
 
 		Config config = configs.stream().filter(c -> c.getKey().equals(enumConfigurationKey)).findFirst().orElse(null);

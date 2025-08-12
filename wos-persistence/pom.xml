@@ -29,11 +29,17 @@
 			<version>6.2.7.Final</version>
 		</dependency>
 
-		<dependency>
-			<groupId>com.zaxxer</groupId>
-			<artifactId>HikariCP</artifactId>
-			<version>5.0.1</version> <!-- Ajusta la versión según tus necesidades -->
-		</dependency>
+                <dependency>
+                        <groupId>com.zaxxer</groupId>
+                        <artifactId>HikariCP</artifactId>
+                        <version>5.0.1</version> <!-- Ajusta la versión según tus necesidades -->
+                </dependency>
+
+                <dependency>
+                        <groupId>org.hibernate.orm</groupId>
+                        <artifactId>hibernate-hikaricp</artifactId>
+                        <version>6.2.7.Final</version>
+                </dependency>
 
 
 		<!-- API de JPA -->

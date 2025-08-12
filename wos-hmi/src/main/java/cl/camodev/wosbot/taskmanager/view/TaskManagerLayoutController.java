@@ -59,13 +59,16 @@ public class TaskManagerLayoutController {
 	@FXML
 	private TabPane tabPaneProfiles;
 
-	@FXML
-	private TextField txtFilterTaskName;
+        @FXML
+        private TextField txtFilterTaskName;
+
+        @FXML
+        private Button btnCopyTasks;
 
 	@FXML
-	public void initialize() {
-		loadProfiles();
-		setupFilterListener();
+        public void initialize() {
+                loadProfiles();
+                setupFilterListener();
 
 		Timeline ticker = new Timeline(new KeyFrame(Duration.seconds(1), evt -> updateTimeValues()));
 		ticker.setCycleCount(Animation.INDEFINITE);
@@ -80,18 +83,29 @@ public class TaskManagerLayoutController {
 		}
 	}
 
-	private void applyFilter(String filterText) {
-		String filter = filterText == null ? "" : filterText.toLowerCase().trim();
+        private void applyFilter(String filterText) {
+                String filter = filterText == null ? "" : filterText.toLowerCase().trim();
 
-		filteredTasks.forEach((profileId, filteredList) -> {
-			filteredList.setPredicate(task -> {
-				if (filter.isEmpty()) {
-					return true;
-				}
-				return task.getTaskName().toLowerCase().contains(filter);
-			});
-		});
-	}
+                filteredTasks.forEach((profileId, filteredList) -> {
+                        filteredList.setPredicate(task -> {
+                                if (filter.isEmpty()) {
+                                        return true;
+                                }
+                                return task.getTaskName().toLowerCase().contains(filter);
+                        });
+                });
+        }
+
+       @FXML
+       private void handleCopyTasks() {
+               Tab selected = tabPaneProfiles.getSelectionModel().getSelectedItem();
+               if (selected == null) {
+                       return;
+               }
+               Long profileId = (Long) selected.getUserData();
+               DTOProfiles profile = taskManagerActionController.findProfileById(profileId);
+               taskManagerActionController.showCopyTasksDialog(profile);
+       }
 
 	// Method to update time-dependent values and trigger reordering
 	private void updateTimeValues() {
@@ -201,9 +215,9 @@ public class TaskManagerLayoutController {
 	/**
 	 * Recarga el estado de las tareas y, cuando estén disponibles, construye la lista de TaskManagerAux y la entrega al consumidor.
 	 */
-	private void buildTaskManagerList(DTOProfiles profile, Consumer<List<TaskManagerAux>> onListReady) {
-		// Ahora `statuses` es una List<DTODailyTaskStatus>
-		taskManagerActionController.loadDailyTaskStatus(profile.getId(), (List<DTODailyTaskStatus> statuses) -> {
+        private void buildTaskManagerList(DTOProfiles profile, Consumer<List<TaskManagerAux>> onListReady) {
+                // Ahora `statuses` es una List<DTODailyTaskStatus>
+                taskManagerActionController.loadDailyTaskStatus(profile.getId(), (List<DTODailyTaskStatus> statuses) -> {
 			List<TaskManagerAux> list = Arrays.stream(TpDailyTaskEnum.values()).map(task -> {
 				// Busca el status cuyo ID coincida con el ID de la tarea
 //				System.out.println(">>> statuses.size=" + statuses.size() + "  buscando id=" + task.getId());
@@ -241,8 +255,23 @@ public class TaskManagerLayoutController {
 			}).collect(Collectors.toList());
 
 			Platform.runLater(() -> onListReady.accept(list));
-		});
-	}
+                });
+        }
+
+       public void refreshProfileTasks(Long profileId) {
+               DTOProfiles profile = taskManagerActionController.findProfileById(profileId);
+               if (profile == null) {
+                       return;
+               }
+               ObservableList<TaskManagerAux> dataList = tasks.get(profileId);
+               if (dataList == null) {
+                       return;
+               }
+               buildTaskManagerList(profile, list -> {
+                       dataList.setAll(list);
+                       FXCollections.sort(dataList, TASK_AUX_COMPARATOR);
+               });
+       }
 
 	private TableView<TaskManagerAux> createTaskTable() {
 		TableView<TaskManagerAux> table = new TableView<>();

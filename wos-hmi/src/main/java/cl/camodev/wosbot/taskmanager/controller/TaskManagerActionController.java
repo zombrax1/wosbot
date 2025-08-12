@@ -7,6 +7,7 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import cl.camodev.wosbot.console.enumerable.EnumTpMessageSeverity;
 import cl.camodev.wosbot.console.enumerable.TpDailyTaskEnum;
@@ -29,6 +30,7 @@ import cl.camodev.wosbot.taskmanager.model.impl.TaskCallback;
 import cl.camodev.wosbot.taskmanager.model.impl.TaskStatusModel;
 import cl.camodev.wosbot.taskmanager.model.TaskManagerAux;
 import cl.camodev.wosbot.taskmanager.view.ScheduleTaskDialogController;
+import cl.camodev.wosbot.taskmanager.view.CopyTasksDialogController;
 import cl.camodev.wosbot.taskmanager.view.TaskManagerLayoutController;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -313,11 +315,43 @@ public class TaskManagerActionController implements ITaskStatusChangeListener {
 	/**
 	 * Helper method to find profile by ID
 	 */
-	public DTOProfiles findProfileById(Long profileId) {
-		List<DTOProfiles> allProfiles = ServProfiles.getServices().getProfiles();
-		return allProfiles.stream()
-			.filter(p -> p.getId().equals(profileId))
-			.findFirst()
-			.orElse(null);
-	}
+        public DTOProfiles findProfileById(Long profileId) {
+                List<DTOProfiles> allProfiles = ServProfiles.getServices().getProfiles();
+                return allProfiles.stream()
+                        .filter(p -> p.getId().equals(profileId))
+                        .findFirst()
+                        .orElse(null);
+        }
+
+       public List<DTOProfiles> getAllProfiles() {
+               return ServProfiles.getServices().getProfiles();
+       }
+
+       public void showCopyTasksDialog(DTOProfiles sourceProfile) {
+               try {
+                       FXMLLoader loader = new FXMLLoader(getClass().getResource("/cl/camodev/wosbot/taskmanager/view/CopyTasksDialog.fxml"));
+                       Parent root = loader.load();
+                       CopyTasksDialogController controller = loader.getController();
+                       controller.init(sourceProfile, this);
+
+                       Stage stage = new Stage();
+                       stage.setTitle("Copy Tasks");
+                       stage.initModality(Modality.APPLICATION_MODAL);
+                       stage.setScene(new Scene(root));
+                       stage.setResizable(false);
+                       stage.showAndWait();
+               } catch (Exception e) {
+                       ServLogs.getServices().appendLog(EnumTpMessageSeverity.ERROR, "TaskManager", "-", "Failed to show copy tasks dialog: " + e.getMessage());
+               }
+       }
+
+       public void copyTasksToProfiles(DTOProfiles sourceProfile, List<DTOProfiles> targets) {
+               List<Long> ids = targets.stream().map(DTOProfiles::getId).collect(Collectors.toList());
+               boolean copied = ServScheduler.getServices().copyDailyTasks(sourceProfile.getId(), ids);
+               if (copied) {
+                       ids.forEach(taskManagerLayoutController::refreshProfileTasks);
+               } else {
+                       ServLogs.getServices().appendLog(EnumTpMessageSeverity.WARNING, "TaskManager", "-", "Failed to copy tasks");
+               }
+       }
 }
