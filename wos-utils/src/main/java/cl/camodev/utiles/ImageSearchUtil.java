@@ -64,65 +64,69 @@ public class ImageSearchUtil {
 			}
 
                         // Load the template from resources
-			InputStream is = ImageSearchUtil.class.getResourceAsStream(templateResourcePath);
-			if (is == null) {
-                logger.error("Template resource not found: {}", templateResourcePath);
-				return new DTOImageSearchResult(false, null, 0.0);
-			}
+                        try (InputStream is = ImageSearchUtil.class.getResourceAsStream(templateResourcePath)) {
+                                if (is == null) {
+                                        logger.error("Template resource not found: {}", templateResourcePath);
+                                        return new DTOImageSearchResult(false, null, 0.0);
+                                }
 
-                        // Read bytes from the template
-			byte[] templateBytes = is.readAllBytes();
-			is.close();
+                                // Read bytes from the template
+                                byte[] templateBytes = is.readAllBytes();
 
-                        // Decode the template into a Mat
-			MatOfByte templateMatOfByte = new MatOfByte(templateBytes);
-			Mat template = Imgcodecs.imdecode(templateMatOfByte, Imgcodecs.IMREAD_COLOR);
+                                // Decode the template into a Mat
+                                MatOfByte templateMatOfByte = new MatOfByte(templateBytes);
+                                Mat template = Imgcodecs.imdecode(templateMatOfByte, Imgcodecs.IMREAD_COLOR);
 
-			if (template.empty()) {
-				logger.error("Error decoding template.");
-				return new DTOImageSearchResult(false, null, 0.0);
-			}
+                                if (template.empty()) {
+                                        logger.error("Error decoding template.");
+                                        return new DTOImageSearchResult(false, null, 0.0);
+                                }
 
-                        // Validate the ROI
-                        if (roiX + roiWidth > mainImage.cols() || roiY + roiHeight > mainImage.rows()) {
-                                logger.error("ROI exceeds image dimensions. Image size: {}x{}, ROI: {}x{} at ({}, {})",
-                                                mainImage.cols(), mainImage.rows(), roiWidth, roiHeight, roiX, roiY);
-				return new DTOImageSearchResult(false, null, 0.0);
-			}
+                                // Validate the ROI
+                                if (roiX + roiWidth > mainImage.cols() || roiY + roiHeight > mainImage.rows()) {
+                                        logger.error(
+                                                        "ROI exceeds image dimensions. Image size: {}x{}, ROI: {}x{} at ({}, {})",
+                                                        mainImage.cols(), mainImage.rows(), roiWidth, roiHeight, roiX, roiY);
+                                        return new DTOImageSearchResult(false, null, 0.0);
+                                }
 
-                        // Create the ROI
-                        Rect roi = new Rect(roiX, roiY, roiWidth, roiHeight);
-                        Mat roiImage = new Mat(mainImage, roi);
+                                // Create the ROI
+                                Rect roi = new Rect(roiX, roiY, roiWidth, roiHeight);
+                                Mat roiImage = new Mat(mainImage, roi);
 
-                        // Verify size
-                        int resultCols = roiImage.cols() - template.cols() + 1;
-                        int resultRows = roiImage.rows() - template.rows() + 1;
-			if (resultCols <= 0 || resultRows <= 0) {
-				logger.error("Template size is larger than ROI size. Template size: {}x{}, ROI size: {}x{}",
-                                                template.cols(), template.rows(), roiImage.cols(), roiImage.rows());
-				return new DTOImageSearchResult(false, null, 0.0);
-			}
+                                // Verify size
+                                int resultCols = roiImage.cols() - template.cols() + 1;
+                                int resultRows = roiImage.rows() - template.rows() + 1;
+                                if (resultCols <= 0 || resultRows <= 0) {
+                                        logger.error(
+                                                        "Template size is larger than ROI size. Template size: {}x{}, ROI size: {}x{}",
+                                                        template.cols(), template.rows(), roiImage.cols(), roiImage.rows());
+                                        return new DTOImageSearchResult(false, null, 0.0);
+                                }
 
-                        // Template matching
-                        Mat result = new Mat(resultRows, resultCols, CvType.CV_32FC1);
-                        Imgproc.matchTemplate(roiImage, template, result, Imgproc.TM_CCOEFF_NORMED);
+                                // Template matching
+                                Mat result = new Mat(resultRows, resultCols, CvType.CV_32FC1);
+                                Imgproc.matchTemplate(roiImage, template, result, Imgproc.TM_CCOEFF_NORMED);
 
-                        // Obtain the best match
-                        Core.MinMaxLocResult mmr = Core.minMaxLoc(result);
-			double matchPercentage = mmr.maxVal * 100.0;
+                                // Obtain the best match
+                                Core.MinMaxLocResult mmr = Core.minMaxLoc(result);
+                                double matchPercentage = mmr.maxVal * 100.0;
 
-			if (matchPercentage < thresholdPercentage) {
-				logger.info("Template {} not found, the match percentage is {}%, which is below the threshold of {}%.",
-						templateResourcePath, matchPercentage, thresholdPercentage);
-				return new DTOImageSearchResult(false, null, matchPercentage);
-			}
+                                if (matchPercentage < thresholdPercentage) {
+                                        logger.info(
+                                                        "Template {} not found, the match percentage is {}%, which is below the threshold of {}%.",
+                                                        templateResourcePath, matchPercentage, thresholdPercentage);
+                                        return new DTOImageSearchResult(false, null, matchPercentage);
+                                }
 
-                        // Adjust coordinates to the center of the match
-			Point matchLoc = mmr.maxLoc;
-			double centerX = matchLoc.x + roi.x + (template.cols() / 2.0);
-			double centerY = matchLoc.y + roi.y + (template.rows() / 2.0);
+                                // Adjust coordinates to the center of the match
+                                Point matchLoc = mmr.maxLoc;
+                                double centerX = matchLoc.x + roi.x + (template.cols() / 2.0);
+                                double centerY = matchLoc.y + roi.y + (template.rows() / 2.0);
 
-			return new DTOImageSearchResult(true, new DTOPoint((int) centerX, (int) centerY), matchPercentage);
+                                return new DTOImageSearchResult(true, new DTOPoint((int) centerX, (int) centerY),
+                                                matchPercentage);
+                        }
 
 		} catch (IOException e) {
 			logger.error("Exception during template search.", e);
