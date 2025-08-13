@@ -27,6 +27,10 @@ public final class BotPersistence {
         private static final String SQLITE_PREFIX = "jdbc:sqlite:";
         private static final String PRAGMA_JOURNAL_MODE_WAL = "PRAGMA journal_mode=WAL";
         private static final String PRAGMA_SYNC_NORMAL = "PRAGMA synchronous=NORMAL";
+        private static final String PRAGMA_BUSY_TIMEOUT = "PRAGMA busy_timeout=5000";
+        private static final String HIKARI_MINIMUM_IDLE = "hibernate.hikari.minimumIdle";
+        private static final String HIKARI_MAXIMUM_POOL_SIZE = "hibernate.hikari.maximumPoolSize";
+        private static final int SQLITE_POOL_SIZE = 1;
         private static final Map<String, BotPersistence> INSTANCES = new ConcurrentHashMap<>();
         private final EntityManagerFactory entityManagerFactory;
         private final String profile;
@@ -36,6 +40,8 @@ public final class BotPersistence {
                 try {
                         Map<String, Object> properties = new HashMap<>();
                         properties.put(JDBC_URL_PROPERTY, SQLITE_PREFIX + resolveDatabasePath(profile));
+                        properties.put(HIKARI_MINIMUM_IDLE, SQLITE_POOL_SIZE);
+                        properties.put(HIKARI_MAXIMUM_POOL_SIZE, SQLITE_POOL_SIZE);
                         entityManagerFactory =
                                         Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME, properties);
                         configureSQLite();
@@ -68,6 +74,7 @@ public final class BotPersistence {
                                 try (Statement statement = connection.createStatement()) {
                                         statement.execute(PRAGMA_JOURNAL_MODE_WAL);
                                         statement.execute(PRAGMA_SYNC_NORMAL);
+                                        statement.execute(PRAGMA_BUSY_TIMEOUT);
                                 }
                         });
                 } catch (Exception e) {
