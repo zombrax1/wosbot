@@ -110,38 +110,40 @@ public class ServScheduler {
 				// obtain current task schedules
 				Map<Integer, DTODailyTaskStatus> taskSchedules = iDailyTaskRepository.findDailyTasksStatusByProfile(profile.getId());
 
-				// Enqueue tasks based on profile configuration
-				taskMappings.forEach((configKey, suppliers) -> {
-					if (profile.getConfig(configKey, Boolean.class)) {
-						for (Supplier<DelayedTask> sup : suppliers) {
-							DelayedTask task = sup.get();
+                               // Enqueue tasks based on profile configuration or existing schedules
+                               taskMappings.forEach((configKey, suppliers) -> {
+                                       for (Supplier<DelayedTask> sup : suppliers) {
+                                               DelayedTask task = sup.get();
+                                               boolean enabled = profile.getConfig(configKey, Boolean.class)
+                                                               || taskSchedules.containsKey(task.getTpDailyTaskId());
+                                               if (!enabled) {
+                                                       continue;
+                                               }
 
-							// Construir estado y encolar
-							DTOTaskState taskState = new DTOTaskState();
-							taskState.setProfileId(profile.getId());
-							taskState.setTaskId(task.getTpTask().getId());
-							taskState.setExecuting(false);
-							taskState.setScheduled(true);
+                                               DTOTaskState taskState = new DTOTaskState();
+                                               taskState.setProfileId(profile.getId());
+                                               taskState.setTaskId(task.getTpTask().getId());
+                                               taskState.setExecuting(false);
+                                               taskState.setScheduled(true);
 
-							DTODailyTaskStatus status = taskSchedules.get(task.getTpDailyTaskId());
-							if (status != null) {
-								LocalDateTime next = status.getNextSchedule();
-								task.reschedule(next);
-								taskState.setLastExecutionTime(status.getLastExecution());
-								taskState.setNextExecutionTime(next);
-								ServLogs.getServices().appendLog(EnumTpMessageSeverity.INFO, task.getTaskName(), profile.getName(), "Next Execution: " + next.format(fmt));
-							} else {
-								task.reschedule(LocalDateTime.now());
-								taskState.setLastExecutionTime(null);
-								taskState.setNextExecutionTime(task.getScheduled());
-								ServLogs.getServices().appendLog(EnumTpMessageSeverity.INFO, task.getTaskName(), profile.getName(), "Task not completed, scheduling for today");
-							}
+                                               DTODailyTaskStatus status = taskSchedules.get(task.getTpDailyTaskId());
+                                               if (status != null) {
+                                                       LocalDateTime next = status.getNextSchedule();
+                                                       task.reschedule(next);
+                                                       taskState.setLastExecutionTime(status.getLastExecution());
+                                                       taskState.setNextExecutionTime(next);
+                                                       ServLogs.getServices().appendLog(EnumTpMessageSeverity.INFO, task.getTaskName(), profile.getName(), "Next Execution: " + next.format(fmt));
+                                               } else {
+                                                       task.reschedule(LocalDateTime.now());
+                                                       taskState.setLastExecutionTime(null);
+                                                       taskState.setNextExecutionTime(task.getScheduled());
+                                                       ServLogs.getServices().appendLog(EnumTpMessageSeverity.INFO, task.getTaskName(), profile.getName(), "Task not completed, scheduling for today");
+                                               }
 
-							ServTaskManager.getInstance().setTaskState(profile.getId(), taskState);
-							queue.addTask(task);
-						}
-					}
-				});
+                                               ServTaskManager.getInstance().setTaskState(profile.getId(), taskState);
+                                               queue.addTask(task);
+                                       }
+                               });
 			});
 
 			queueManager.startQueues();
