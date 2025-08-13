@@ -40,8 +40,9 @@ public final class BotPersistence {
                 try {
                         Map<String, Object> properties = new HashMap<>();
                         properties.put(JDBC_URL_PROPERTY, SQLITE_PREFIX + resolveDatabasePath(profile));
-                        properties.put(HIKARI_MINIMUM_IDLE, SQLITE_POOL_SIZE);
-                        properties.put(HIKARI_MAXIMUM_POOL_SIZE, SQLITE_POOL_SIZE);
+                        // Hikari expects configuration values as Strings
+                        properties.put(HIKARI_MINIMUM_IDLE, String.valueOf(SQLITE_POOL_SIZE));
+                        properties.put(HIKARI_MAXIMUM_POOL_SIZE, String.valueOf(SQLITE_POOL_SIZE));
                         entityManagerFactory =
                                         Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME, properties);
                         configureSQLite();
