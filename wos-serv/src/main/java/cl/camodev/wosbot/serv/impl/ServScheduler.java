@@ -16,6 +16,7 @@ import cl.camodev.wosbot.almac.entity.DailyTask;
 import cl.camodev.wosbot.almac.entity.Profile;
 import cl.camodev.wosbot.almac.entity.TpConfig;
 import cl.camodev.wosbot.almac.entity.TpDailyTask;
+import cl.camodev.wosbot.almac.jpa.BotPersistence;
 import cl.camodev.wosbot.almac.repo.ConfigRepository;
 import cl.camodev.wosbot.almac.repo.DailyTaskRepository;
 import cl.camodev.wosbot.almac.repo.IConfigRepository;
@@ -287,10 +288,21 @@ public class ServScheduler {
                                return false;
                        }
                        for (Long targetId : targetProfileIds) {
-                               Profile targetProfile = iProfileRepository.getProfileById(targetId);
+                               BotPersistence targetPersistence = BotPersistence.getInstance(String.valueOf(targetId));
+                               Profile targetProfile = targetPersistence.findEntityById(Profile.class, targetId);
                                if (targetProfile == null) {
-                                       continue;
+                                       Profile baseProfile = iProfileRepository.getProfileById(targetId);
+                                       if (baseProfile == null) {
+                                               continue;
+                                       }
+                                       targetProfile = new Profile();
+                                       targetProfile.setId(baseProfile.getId());
+                                       targetProfile.setName(baseProfile.getName());
+                                       targetProfile.setEmulatorNumber(baseProfile.getEmulatorNumber());
+                                       targetProfile.setEnabled(baseProfile.getEnabled());
+                                       targetPersistence.updateEntity(targetProfile);
                                }
+
                                List<DailyTask> existing = iDailyTaskRepository.findByProfileId(targetId);
                                if (existing != null) {
                                        for (DailyTask dt : existing) {
@@ -298,11 +310,8 @@ public class ServScheduler {
                                        }
                                }
                                for (DailyTask src : sourceTasks) {
-                                       DailyTask copy = new DailyTask();
-                                       copy.setProfile(targetProfile);
-                                       copy.setTask(src.getTask());
-                                       copy.setLastExecution(src.getLastExecution());
-                                       copy.setNextSchedule(src.getNextSchedule());
+                                       TpDailyTask taskEntity = targetPersistence.findEntityById(TpDailyTask.class, src.getTask().getId());
+                                       DailyTask copy = new DailyTask(targetProfile, taskEntity, src.getLastExecution(), src.getNextSchedule());
                                        iDailyTaskRepository.addDailyTask(copy);
                                }
                        }
