@@ -35,14 +35,14 @@
                          <children>
                             <HBox alignment="CENTER" spacing="5.0">
                                <children>
-                                  <Button fx:id="buttonPrevProfile" mnemonicParsing="false" onAction="#handlePrevProfile" text="<" style="-fx-background-color: #555555; -fx-text-fill: white; -fx-font-size: 10px;" />
+                                  <Button fx:id="buttonPrevProfile" mnemonicParsing="false" onAction="#handlePrevProfile" text="&lt;" style="-fx-background-color: #555555; -fx-text-fill: white; -fx-font-size: 10px;" />
                                   <StackPane alignment="CENTER">
                                      <children>
                                         <Circle fx:id="imagePlaceholder" fill="#555555" radius="64.0" />
                                         <ImageView fx:id="imageProfile" pickOnBounds="true" preserveRatio="true" />
                                      </children>
                                   </StackPane>
-                                  <Button fx:id="buttonNextProfile" mnemonicParsing="false" onAction="#handleNextProfile" text=">" style="-fx-background-color: #555555; -fx-text-fill: white; -fx-font-size: 10px;" />
+                                  <Button fx:id="buttonNextProfile" mnemonicParsing="false" onAction="#handleNextProfile" text="&gt;" style="-fx-background-color: #555555; -fx-text-fill: white; -fx-font-size: 10px;" />
                                </children>
                             </HBox>
                             <Label fx:id="labelProfileName" style="-fx-text-fill: white; -fx-font-size: 14px;" />
