@@ -2,6 +2,7 @@ package cl.camodev.wosbot.profile.view;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -374,12 +375,24 @@ public class ProfileManagerLayoutController implements IProfileChangeObserver {
 
 	}
 
-	public void addProfileLoadListener(IProfileLoadListener moduleController) {
-		if (profileLoadListeners == null) {
-			profileLoadListeners = new ArrayList<>();
-		}
-		profileLoadListeners.add(moduleController);
-	}
+        public void addProfileLoadListener(IProfileLoadListener moduleController) {
+                if (profileLoadListeners == null) {
+                        profileLoadListeners = new ArrayList<>();
+                }
+                profileLoadListeners.add(moduleController);
+        }
+
+       public List<ProfileAux> getProfilesList() {
+               return Collections.unmodifiableList(profiles);
+       }
+
+       public void loadProfile(ProfileAux profile) {
+               if (profile == null) {
+                       return;
+               }
+               loadedProfileId = profile.getId();
+               notifyProfileLoadListeners(profile);
+       }
 
 	public void handleProfileStatusChange(DTOProfileStatus status) {
 		Platform.runLater(() -> {

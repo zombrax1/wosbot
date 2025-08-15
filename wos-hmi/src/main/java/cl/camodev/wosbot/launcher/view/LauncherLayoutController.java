@@ -67,8 +67,8 @@ public class LauncherLayoutController implements IProfileLoadListener {
         @FXML
         private Button buttonStartStop;
 
-        @FXML
-        private Button buttonPauseResume;
+       @FXML
+       private Button buttonPauseResume;
 
         @FXML
         private AnchorPane mainContentPane;
@@ -87,6 +87,10 @@ public class LauncherLayoutController implements IProfileLoadListener {
 
        @FXML
        private Button buttonChangePhoto;
+       @FXML
+       private Button buttonPrevProfile;
+       @FXML
+       private Button buttonNextProfile;
 
        @FXML
        private Circle imagePlaceholder;
@@ -97,13 +101,14 @@ public class LauncherLayoutController implements IProfileLoadListener {
 
 	private ConsoleLogLayoutController consoleLogLayoutController;
 
-	private ProfileManagerLayoutController profileManagerLayoutController;
+       private ProfileManagerLayoutController profileManagerLayoutController;
 
-	private Map<String, Object> moduleControllers = new HashMap<>();
+       private Map<String, Object> moduleControllers = new HashMap<>();
 
        private boolean estado = false;
 
        private ProfileAux currentProfile;
+       private int currentProfileIndex = -1;
 
 	public LauncherLayoutController(Stage stage) {
 		this.stage = stage;
@@ -419,8 +424,10 @@ public class LauncherLayoutController implements IProfileLoadListener {
 	}
 
         @Override
-        public void onProfileLoad(ProfileAux profile) {
+       public void onProfileLoad(ProfileAux profile) {
                currentProfile = profile;
+               List<ProfileAux> profiles = profileManagerLayoutController.getProfilesList();
+               currentProfileIndex = profiles.indexOf(profile);
                labelProfileName.setText(profile.getName());
                String photoPath = profile.getConfig(EnumConfigurationKey.PROFILE_IMAGE_PATH_STRING, String.class);
                if (photoPath != null && !photoPath.trim().isEmpty()) {
@@ -455,6 +462,26 @@ public class LauncherLayoutController implements IProfileLoadListener {
                        currentProfile.setConfig(EnumConfigurationKey.PROFILE_IMAGE_PATH_STRING, selectedFile.getAbsolutePath());
                        profileManagerLayoutController.saveProfile(currentProfile);
                }
+       }
+
+       @FXML
+       private void handlePrevProfile() {
+               List<ProfileAux> profiles = profileManagerLayoutController.getProfilesList();
+               if (profiles == null || profiles.isEmpty()) {
+                       return;
+               }
+               currentProfileIndex = (currentProfileIndex - 1 + profiles.size()) % profiles.size();
+               profileManagerLayoutController.loadProfile(profiles.get(currentProfileIndex));
+       }
+
+       @FXML
+       private void handleNextProfile() {
+               List<ProfileAux> profiles = profileManagerLayoutController.getProfilesList();
+               if (profiles == null || profiles.isEmpty()) {
+                       return;
+               }
+               currentProfileIndex = (currentProfileIndex + 1) % profiles.size();
+               profileManagerLayoutController.loadProfile(profiles.get(currentProfileIndex));
        }
 
 	public void onBotStateChange(DTOBotState botState) {
