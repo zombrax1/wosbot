@@ -33,12 +33,18 @@
                    <children>
                       <VBox alignment="TOP_CENTER" spacing="8.0" style="-fx-background-color: #2E2E2E; -fx-padding: 15; -fx-background-radius: 5;">
                          <children>
-                            <StackPane alignment="CENTER">
+                            <HBox alignment="CENTER" spacing="5.0">
                                <children>
-                                  <Circle fx:id="imagePlaceholder" fill="#555555" radius="64.0" />
-                                  <ImageView fx:id="imageProfile" pickOnBounds="true" preserveRatio="true" />
+                                  <Button fx:id="buttonPrevProfile" mnemonicParsing="false" onAction="#handlePrevProfile" text="<" style="-fx-background-color: #555555; -fx-text-fill: white; -fx-font-size: 10px;" />
+                                  <StackPane alignment="CENTER">
+                                     <children>
+                                        <Circle fx:id="imagePlaceholder" fill="#555555" radius="64.0" />
+                                        <ImageView fx:id="imageProfile" pickOnBounds="true" preserveRatio="true" />
+                                     </children>
+                                  </StackPane>
+                                  <Button fx:id="buttonNextProfile" mnemonicParsing="false" onAction="#handleNextProfile" text=">" style="-fx-background-color: #555555; -fx-text-fill: white; -fx-font-size: 10px;" />
                                </children>
-                            </StackPane>
+                            </HBox>
                             <Label fx:id="labelProfileName" style="-fx-text-fill: white; -fx-font-size: 14px;" />
                             <Button fx:id="buttonChangePhoto" mnemonicParsing="false" onAction="#handleChangePhoto" text="Upload Photo" style="-fx-background-color: #555555; -fx-text-fill: white; -fx-font-size: 10px;" />
                          </children>
