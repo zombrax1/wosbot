@@ -21,21 +21,24 @@ public final class BotPersistence {
         private static final String PROFILE_PROPERTY = "bot.profile";
         private static final String DEFAULT_PROFILE = "default";
         private static final String SQLITE_PREFIX = "jdbc:sqlite:";
+        private static final int BUSY_TIMEOUT_MS = 5000;
         private static final String PRAGMA_JOURNAL_MODE_WAL = "PRAGMA journal_mode=WAL";
         private static final String PRAGMA_SYNC_NORMAL = "PRAGMA synchronous=NORMAL";
+        private static final String PRAGMA_BUSY_TIMEOUT = "PRAGMA busy_timeout=" + BUSY_TIMEOUT_MS;
         private static BotPersistence instance;
         private static EntityManagerFactory entityManagerFactory;
 
         private BotPersistence() {
                 try {
                         Map<String, Object> properties = new HashMap<>();
-                        properties.put(JDBC_URL_PROPERTY, SQLITE_PREFIX + resolveDatabasePath());
+                        properties.put(JDBC_URL_PROPERTY,
+                                        SQLITE_PREFIX + resolveDatabasePath() + "?busy_timeout=" + BUSY_TIMEOUT_MS);
                         entityManagerFactory =
                                         Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME, properties);
                         configureSQLite();
                         PersistenceDataInitialization.initializeData();
                 } catch (Exception ex) {
-                        System.err.println("Error inicializando EntityManagerFactory: " + ex.getMessage());
+                        System.err.println("Error initializing EntityManagerFactory: " + ex.getMessage());
                         throw new ExceptionInInitializerError(ex);
                 }
         }
@@ -64,6 +67,7 @@ public final class BotPersistence {
                         entityManager.getTransaction().begin();
                         entityManager.createNativeQuery(PRAGMA_JOURNAL_MODE_WAL).executeUpdate();
                         entityManager.createNativeQuery(PRAGMA_SYNC_NORMAL).executeUpdate();
+                        entityManager.createNativeQuery(PRAGMA_BUSY_TIMEOUT).executeUpdate();
                         entityManager.getTransaction().commit();
                 } catch (Exception e) {
                         System.err.println("Error configuring SQLite: " + e.getMessage());
@@ -93,7 +97,7 @@ public final class BotPersistence {
                         }
                         return false;
 		} finally {
-			entityManager.close(); // Cierra el EntityManager después de cada transacción
+                        entityManager.close(); // Close the EntityManager after each transaction
 		}
 	}
 
@@ -148,7 +152,7 @@ public final class BotPersistence {
 		try {
 			Query query = entityManager.createQuery(queryString, resultClass);
 
-			// Agregar los parámetros a la Query
+                        // Add parameters to the Query
 			if (parameters != null) {
 				for (Map.Entry<String, Object> param : parameters.entrySet()) {
 					query.setParameter(param.getKey(), param.getValue());
@@ -157,7 +161,7 @@ public final class BotPersistence {
 
 			return query.getResultList();
 		} finally {
-			entityManager.close(); // Cerrar el EntityManager después de la ejecución
+                        entityManager.close(); // Close the EntityManager after execution
 		}
 	}
 

@@ -136,8 +136,8 @@ public class TaskManagerLayoutController {
 				for (DTOProfiles profile : dtoProfiles) {
 
 					Tab existing = profileTabsMap.get(profile.getId());
-					if (existing == null) {
-						// Nuevo perfil → crea tab
+                                        if (existing == null) {
+                                                // New profile → create tab
 						Tab newTab = createProfileTab(profile);
 						profileTabsMap.put(profile.getId(), newTab);
 						tabPaneProfiles.getTabs().add(newTab);
@@ -160,10 +160,10 @@ public class TaskManagerLayoutController {
 		tab.setClosable(false);
 		tab.setUserData(profile.getId());
 
-		// 1) Prepara la tabla y la lista observable vacía
+                // 1) Prepare the table and empty observable list
 		ObservableList<TaskManagerAux> dataList = FXCollections.observableArrayList();
 
-		// 2) Crea FilteredList para el filtrado
+                // 2) Create FilteredList for filtering
 		FilteredList<TaskManagerAux> filteredList = new FilteredList<>(dataList);
 
 		TableView<TaskManagerAux> table = createTaskTable();
@@ -174,7 +174,7 @@ public class TaskManagerLayoutController {
 		filteredTasks.put(profile.getId(), filteredList);
 		tab.setContent(table);
 
-		// 3) Llama al builder asíncrono y actualiza la tabla cuando esté listo
+                // 3) Call the async builder and update the table when ready
 		buildTaskManagerList(profile, list -> {
 			// Siempre desde JavaFX Application Thread
 			dataList.setAll(list);
@@ -198,14 +198,14 @@ public class TaskManagerLayoutController {
 //		dataList.setAll(updated);
 //	}
 
-	/**
-	 * Recarga el estado de las tareas y, cuando estén disponibles, construye la lista de TaskManagerAux y la entrega al consumidor.
-	 */
+        /**
+         * Reloads task status and, when available, builds the TaskManagerAux list and provides it to the consumer.
+         */
 	private void buildTaskManagerList(DTOProfiles profile, Consumer<List<TaskManagerAux>> onListReady) {
 		// Ahora `statuses` es una List<DTODailyTaskStatus>
 		taskManagerActionController.loadDailyTaskStatus(profile.getId(), (List<DTODailyTaskStatus> statuses) -> {
 			List<TaskManagerAux> list = Arrays.stream(TpDailyTaskEnum.values()).map(task -> {
-				// Busca el status cuyo ID coincida con el ID de la tarea
+                                // Find the status whose ID matches the task ID
 //				System.out.println(">>> statuses.size=" + statuses.size() + "  buscando id=" + task.getId());
 
 				DTODailyTaskStatus s = statuses.stream().filter(st -> st.getIdTpDailyTask() == task.getId()) // o st.getTaskId()
@@ -257,7 +257,7 @@ public class TaskManagerLayoutController {
 			private final ImageView imageView = new ImageView();
 
 			{
-				// Ajusta tamaño del icono si es necesario
+                                // Adjust icon size if needed
 				imageView.setFitWidth(16);
 				imageView.setFitHeight(16);
 			}
@@ -271,10 +271,10 @@ public class TaskManagerLayoutController {
 					setStyle("");
 				} else {
 					setText(item);
-					// Obtén el objeto de la fila actual
+                                        // Get the object of the current row
 					TaskManagerAux task = getTableRow().getItem();
 					if (task != null) {
-						// Elige el icono según la propiedad booleana
+                                                // Choose the icon based on the boolean property
 						boolean flag = task.scheduledProperty().get();
 						imageView.setImage(flag ? iconTrue : iconFalse);
 						setGraphic(imageView);
@@ -395,7 +395,7 @@ public class TaskManagerLayoutController {
 		});
 
 		TableColumn<TaskManagerAux, Void> colActions = new TableColumn<>("Actions");
-		colActions.setPrefWidth(250); // Aumentar el ancho para acomodar el tercer botón
+                colActions.setPrefWidth(250); // Increase width to accommodate the third button
 		colActions.setCellFactory(column -> new TableCell<>() {
 			private final Button btnSchedule = new Button("Schedule");
 			private final Button btnRemove = new Button("Remove");
