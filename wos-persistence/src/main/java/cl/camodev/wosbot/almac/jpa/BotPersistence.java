@@ -21,27 +21,21 @@ public final class BotPersistence {
         private static final String PROFILE_PROPERTY = "bot.profile";
         private static final String DEFAULT_PROFILE = "default";
         private static final String SQLITE_PREFIX = "jdbc:sqlite:";
-        private static final int BUSY_TIMEOUT_MS = 5000;
-        private static final String PRAGMA_JOURNAL_MODE_WAL = "PRAGMA journal_mode=WAL";
-        private static final String PRAGMA_SYNC_NORMAL = "PRAGMA synchronous=NORMAL";
-        private static final String PRAGMA_BUSY_TIMEOUT = "PRAGMA busy_timeout=" + BUSY_TIMEOUT_MS;
         private static BotPersistence instance;
         private static EntityManagerFactory entityManagerFactory;
 
-        private BotPersistence() {
-                try {
-                        Map<String, Object> properties = new HashMap<>();
-                        properties.put(JDBC_URL_PROPERTY,
-                                        SQLITE_PREFIX + resolveDatabasePath() + "?busy_timeout=" + BUSY_TIMEOUT_MS);
-                        entityManagerFactory =
-                                        Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME, properties);
-                        configureSQLite();
-                        PersistenceDataInitialization.initializeData();
-                } catch (Exception ex) {
-                        System.err.println("Error initializing EntityManagerFactory: " + ex.getMessage());
-                        throw new ExceptionInInitializerError(ex);
-                }
+    private BotPersistence() {
+        try {
+            Map<String, Object> properties = new HashMap<>();
+            properties.put(JDBC_URL_PROPERTY, SQLITE_PREFIX + resolveDatabasePath());
+            entityManagerFactory =
+                    Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME, properties);
+            PersistenceDataInitialization.initializeData();
+        } catch (Exception ex) {
+            System.err.println("Error initializing EntityManagerFactory: " + ex.getMessage());
+            throw new ExceptionInInitializerError(ex);
         }
+    }
 
         public static BotPersistence getInstance() {
                 if (instance == null) {
@@ -61,23 +55,6 @@ public final class BotPersistence {
                 return directory.resolve(profile + ".db").toString();
         }
 
-        private void configureSQLite() {
-                EntityManager entityManager = getEntityManager();
-                try {
-                        entityManager.getTransaction().begin();
-                        entityManager.createNativeQuery(PRAGMA_JOURNAL_MODE_WAL).getSingleResult();
-                        entityManager.createNativeQuery(PRAGMA_SYNC_NORMAL).getSingleResult();
-                        entityManager.createNativeQuery(PRAGMA_BUSY_TIMEOUT).getSingleResult();
-                        entityManager.getTransaction().commit();
-                } catch (Exception e) {
-                        System.err.println("Error configuring SQLite: " + e.getMessage());
-                        if (entityManager.getTransaction().isActive()) {
-                                entityManager.getTransaction().rollback();
-                        }
-                } finally {
-                        entityManager.close();
-                }
-        }
 
 	private EntityManager getEntityManager() {
 		return entityManagerFactory.createEntityManager();
