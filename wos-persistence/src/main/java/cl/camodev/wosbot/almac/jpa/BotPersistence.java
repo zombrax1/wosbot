@@ -21,24 +21,21 @@ public final class BotPersistence {
         private static final String PROFILE_PROPERTY = "bot.profile";
         private static final String DEFAULT_PROFILE = "default";
         private static final String SQLITE_PREFIX = "jdbc:sqlite:";
-        private static final String PRAGMA_JOURNAL_MODE_WAL = "PRAGMA journal_mode=WAL";
-        private static final String PRAGMA_SYNC_NORMAL = "PRAGMA synchronous=NORMAL";
         private static BotPersistence instance;
         private static EntityManagerFactory entityManagerFactory;
 
-        private BotPersistence() {
-                try {
-                        Map<String, Object> properties = new HashMap<>();
-                        properties.put(JDBC_URL_PROPERTY, SQLITE_PREFIX + resolveDatabasePath());
-                        entityManagerFactory =
-                                        Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME, properties);
-                        configureSQLite();
-                        PersistenceDataInitialization.initializeData();
-                } catch (Exception ex) {
-                        System.err.println("Error inicializando EntityManagerFactory: " + ex.getMessage());
-                        throw new ExceptionInInitializerError(ex);
-                }
+    private BotPersistence() {
+        try {
+            Map<String, Object> properties = new HashMap<>();
+            properties.put(JDBC_URL_PROPERTY, SQLITE_PREFIX + resolveDatabasePath());
+            entityManagerFactory =
+                    Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME, properties);
+            PersistenceDataInitialization.initializeData();
+        } catch (Exception ex) {
+            System.err.println("Error initializing EntityManagerFactory: " + ex.getMessage());
+            throw new ExceptionInInitializerError(ex);
         }
+    }
 
         public static BotPersistence getInstance() {
                 if (instance == null) {
@@ -58,22 +55,6 @@ public final class BotPersistence {
                 return directory.resolve(profile + ".db").toString();
         }
 
-        private void configureSQLite() {
-                EntityManager entityManager = getEntityManager();
-                try {
-                        entityManager.getTransaction().begin();
-                        entityManager.createNativeQuery(PRAGMA_JOURNAL_MODE_WAL).executeUpdate();
-                        entityManager.createNativeQuery(PRAGMA_SYNC_NORMAL).executeUpdate();
-                        entityManager.getTransaction().commit();
-                } catch (Exception e) {
-                        System.err.println("Error configuring SQLite: " + e.getMessage());
-                        if (entityManager.getTransaction().isActive()) {
-                                entityManager.getTransaction().rollback();
-                        }
-                } finally {
-                        entityManager.close();
-                }
-        }
 
 	private EntityManager getEntityManager() {
 		return entityManagerFactory.createEntityManager();
@@ -93,7 +74,7 @@ public final class BotPersistence {
                         }
                         return false;
 		} finally {
-			entityManager.close(); // Cierra el EntityManager después de cada transacción
+                        entityManager.close(); // Close the EntityManager after each transaction
 		}
 	}
 
@@ -148,7 +129,7 @@ public final class BotPersistence {
 		try {
 			Query query = entityManager.createQuery(queryString, resultClass);
 
-			// Agregar los parámetros a la Query
+                        // Add parameters to the Query
 			if (parameters != null) {
 				for (Map.Entry<String, Object> param : parameters.entrySet()) {
 					query.setParameter(param.getKey(), param.getValue());
@@ -157,7 +138,7 @@ public final class BotPersistence {
 
 			return query.getResultList();
 		} finally {
-			entityManager.close(); // Cerrar el EntityManager después de la ejecución
+                        entityManager.close(); // Close the EntityManager after execution
 		}
 	}
 
