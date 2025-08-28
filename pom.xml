@@ -20,8 +20,8 @@
     </properties>
 	<modules>
 		<module>wos-hmi</module>
-		<module>wos-utiles</module>
-		<module>wos-persitence</module>
+		<module>wos-utils</module>
+		<module>wos-persistence</module>
 		<module>wos-serv</module>
 		<module>wos-ot</module>
 	</modules>
@@ -58,6 +58,12 @@
 				<artifactId>logback-classic</artifactId>
 				<version>${logback.version}</version>
 				<scope>runtime</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.junit.jupiter</groupId>
+				<artifactId>junit-jupiter</artifactId>
+				<version>5.10.1</version>
+				<scope>test</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

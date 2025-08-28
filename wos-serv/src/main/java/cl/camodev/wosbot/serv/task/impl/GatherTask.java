@@ -198,7 +198,7 @@ public class GatherTask extends DelayedTask {
                             esults.sort(Comparator.comparingInt(r -> r.getPoint().getX()));
 
                             for (int i = 1; i < esults.size(); i++) {
-                                emuManager.tapAtPoint(EMULATOR_NUMBER, results.get(i).getPoint());
+                                emuManager.tapAtPoint(EMULATOR_NUMBER, esults.get(i).getPoint());
                                 sleepTask(300);
                             }
 
