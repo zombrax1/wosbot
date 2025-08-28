@@ -12,8 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
-
-import cl.camodev.utiles.UtilCV;
+import cl.camodev.utiles.ImageSearchUtil;
 import cl.camodev.wosbot.alliance.view.AllianceLayoutController;
 import cl.camodev.wosbot.city.view.CityEventsLayoutController;
 import cl.camodev.wosbot.city.view.CityUpgradesLayoutController;
@@ -22,6 +21,7 @@ import cl.camodev.wosbot.console.enumerable.EnumTpMessageSeverity;
 import cl.camodev.wosbot.console.view.ConsoleLogLayoutController;
 import cl.camodev.wosbot.emulator.EmulatorType;
 import cl.camodev.wosbot.emulator.view.EmuConfigLayoutController;
+import cl.camodev.wosbot.events.view.EventsLayoutController;
 import cl.camodev.wosbot.gather.view.GatherLayoutController;
 import cl.camodev.wosbot.intel.view.IntelLayoutController;
 import cl.camodev.wosbot.ot.DTOBotState;
@@ -37,78 +37,54 @@ import cl.camodev.wosbot.serv.impl.ServScheduler;
 import cl.camodev.wosbot.shop.view.ShopLayoutController;
 import cl.camodev.wosbot.taskmanager.view.TaskManagerLayoutController;
 import cl.camodev.wosbot.training.view.TrainingLayoutController;
-import javafx.concurrent.Task;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
+import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class LauncherLayoutController implements IProfileLoadListener {
 
-       private static final double PROFILE_IMAGE_SIZE = 128.0;
+	@FXML
+	private VBox buttonsContainer;
+	@FXML
+	private Button buttonStartStop;
 
-        @FXML
-        private VBox buttonsContainer;
-        @FXML
-        private Button buttonStartStop;
+	@FXML
+	private Button buttonPauseResume;
 
-       @FXML
-       private Button buttonPauseResume;
+	@FXML
+	private AnchorPane mainContentPane;
 
-        @FXML
-        private AnchorPane mainContentPane;
+	@FXML
+	private Label labelRunTime;
 
-        @FXML
-        private Label labelRunTime;
+	@FXML
+	private Label labelVersion;
 
-        @FXML
-        private Label labelVersion;
+	@FXML
+	private ComboBox<ProfileAux> profileComboBox;
 
-        @FXML
-       private ImageView imageProfile;
-
-       @FXML
-       private Label labelProfileName;
-
-       @FXML
-       private Button buttonChangePhoto;
-       @FXML
-       private Button buttonPrevProfile;
-       @FXML
-       private Button buttonNextProfile;
-
-       @FXML
-       private Circle imagePlaceholder;
-
-        private Stage stage;
+	private Stage stage;
 
 	private LauncherActionController actionController;
 
 	private ConsoleLogLayoutController consoleLogLayoutController;
 
-       private ProfileManagerLayoutController profileManagerLayoutController;
+	private ProfileManagerLayoutController profileManagerLayoutController;
 
-       private Map<String, Object> moduleControllers = new HashMap<>();
+	private final Map<String, Object> moduleControllers = new HashMap<>();
 
-       private boolean estado = false;
-
-       private ProfileAux currentProfile;
-       private int currentProfileIndex = -1;
+	private boolean estado = false;
+	private boolean updatingComboBox = false; // Bandera para evitar eventos durante actualizaciones programáticas
 
 	public LauncherLayoutController(Stage stage) {
 		this.stage = stage;
@@ -116,50 +92,24 @@ public class LauncherLayoutController implements IProfileLoadListener {
 
 	@FXML
 	private void initialize() {
-               initializeDiscordBot();
-               initializeEmulatorManager();
-               initializeLogModule();
-               initializeProfileModule();
-               initializeModules();
-               initializeExternalLibraries();
-               showVersion();
-               initializeProfileHeader();
+		initializeDiscordBot();
+		initializeEmulatorManager();
+		initializeLogModule();
+		initializeProfileModule();
+		initializeProfileComboBox();
+		initializeModules();
+		initializeExternalLibraries();
+		initializeEmulatorManager();
+		showVersion();
 
-        }
+	}
 
-        private void showVersion() {
-                String version = getVersion();
-                labelVersion.setText("Version: " + version);
-        }
+	private void showVersion() {
+		String version = getVersion();
+		labelVersion.setText("Version: " + version);
+	}
 
-       private void initializeProfileHeader() {
-               imageProfile.setFitHeight(PROFILE_IMAGE_SIZE);
-               imageProfile.setFitWidth(PROFILE_IMAGE_SIZE);
-               imageProfile.setClip(new Circle(PROFILE_IMAGE_SIZE / 2, PROFILE_IMAGE_SIZE / 2, PROFILE_IMAGE_SIZE / 2));
-               imagePlaceholder.setRadius(PROFILE_IMAGE_SIZE / 2);
-               imagePlaceholder.setVisible(true);
-               imageProfile.setImage(null);
-               labelProfileName.setText("");
-       }
-
-       private void loadProfileImageAsync(File file) {
-               imageProfile.setImage(null);
-               imagePlaceholder.setVisible(true);
-               Task<Image> loadTask = new Task<>() {
-                       @Override
-                       protected Image call() {
-                               return new Image(file.toURI().toString(), PROFILE_IMAGE_SIZE, PROFILE_IMAGE_SIZE, true, true);
-                       }
-               };
-               loadTask.setOnSucceeded(e -> {
-                       imageProfile.setImage(loadTask.getValue());
-                       imagePlaceholder.setVisible(false);
-               });
-               loadTask.setOnFailed(e -> imagePlaceholder.setVisible(true));
-               new Thread(loadTask, "ProfileImageLoader").start();
-       }
-
-        private String getVersion() {
+	private String getVersion() {
 		// If running as JAR
 		Package pkg = getClass().getPackage();
 		if (pkg != null && pkg.getImplementationVersion() != null) {
@@ -304,18 +254,111 @@ public class LauncherLayoutController implements IProfileLoadListener {
 
 	}
 
+	private void initializeLogModule() {
+		actionController = new LauncherActionController(this);
+		consoleLogLayoutController = new ConsoleLogLayoutController();
+		addButton("ConsoleLogLayout", "Logs", consoleLogLayoutController).fire();
+	}
+
 	private void initializeProfileModule() {
 		profileManagerLayoutController = new ProfileManagerLayoutController();
+		actionController.setProfileManagerController(profileManagerLayoutController);
 		addButton("ProfileManagerLayout", "Profiles", profileManagerLayoutController);
+	}
 
+	private void initializeProfileComboBox() {
+
+		configureComboCells();
+
+
+		profileComboBox.setOnAction(event -> {
+
+			if (!updatingComboBox) {
+				ProfileAux selectedProfile = profileComboBox.getSelectionModel().getSelectedItem();
+				if (selectedProfile != null) {
+
+					actionController.selectProfile(selectedProfile);
+				}
+			}
+		});
+
+
+		if (profileManagerLayoutController != null) {
+			profileManagerLayoutController.addProfileLoadListener(new IProfileLoadListener() {
+				@Override
+				public void onProfileLoad(ProfileAux profile) {
+
+					Platform.runLater(() -> {
+						actionController.updateProfileComboBox();
+					});
+				}
+			});
+		}
+
+
+		Platform.runLater(() -> {
+			actionController.loadProfilesIntoComboBox();
+		});
+	}
+
+
+	public void updateComboBoxItems(javafx.collections.ObservableList<ProfileAux> profiles) {
+		updatingComboBox = true;
+		profileComboBox.getItems().clear();
+		profileComboBox.getItems().addAll(profiles);
+
+		configureComboCells();
+		updatingComboBox = false;
+	}
+
+	private void configureComboCells() {
+
+		profileComboBox.setCellFactory(listView -> new ListCell<ProfileAux>() {
+			@Override
+			protected void updateItem(ProfileAux profile, boolean empty) {
+				super.updateItem(profile, empty);
+				if (empty || profile == null) {
+					setText(null);
+				} else {
+					setText(profile.getName() + " (Emulator: " + profile.getEmulatorNumber() + ")");
+				}
+			}
+		});
+
+
+		profileComboBox.setButtonCell(new ListCell<ProfileAux>() {
+			@Override
+			protected void updateItem(ProfileAux profile, boolean empty) {
+				super.updateItem(profile, empty);
+				if (empty || profile == null) {
+					setText(null);
+				} else {
+					setText(profile.getName() + " (Emulator: " + profile.getEmulatorNumber() + ")");
+				}
+			}
+		});
+	}
+
+	public ProfileAux getSelectedProfile() {
+		return profileComboBox.getSelectionModel().getSelectedItem();
+	}
+
+	public void selectProfileInComboBox(ProfileAux profile) {
+		updatingComboBox = true;
+		profileComboBox.getSelectionModel().select(profile);
+		updatingComboBox = false;
+	}
+
+	public void refreshProfileComboBox() {
+		actionController.refreshProfileComboBox();
 	}
 
 	private void initializeExternalLibraries() {
-                try {
-                        UtilCV.loadNativeLibrary("/native/opencv/opencv_java4110.dll");
-                } catch (IOException e) {
-                        System.err.println("Failed to load OpenCV library: " + e.getMessage());
-                }
+		try {
+			ImageSearchUtil.loadNativeLibrary("/native/opencv/opencv_java4110.dll");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -331,18 +374,19 @@ public class LauncherLayoutController implements IProfileLoadListener {
 				new ModuleDefinition("AllianceLayout", "Alliance", AllianceLayoutController::new),
 				new ModuleDefinition("TrainingLayout", "Training", TrainingLayoutController::new),
 				new ModuleDefinition("PetsLayout", "Pets", PetsLayoutController::new),
+				new ModuleDefinition("EventsLayout", "Events", EventsLayoutController::new),
 				new ModuleDefinition("EmuConfigLayout", "Config", EmuConfigLayoutController::new)
 				
 				);
 		//@formatter:on
 
 		for (ModuleDefinition module : modules) {
-			consoleLogLayoutController.appendMessage(new DTOLogMessage(EnumTpMessageSeverity.INFO, "Loading module: " + module.getButtonTitle(), "-", "-"));
+			consoleLogLayoutController.appendMessage(new DTOLogMessage(EnumTpMessageSeverity.INFO, "Loading module: " + module.buttonTitle(), "-", "-"));
 
-			// Crear el controlador con la instancia de profileObserver
+
 			Object controller = module.createController(profileManagerLayoutController);
-			moduleControllers.put(module.getButtonTitle(), controller);
-			addButton(module.getFxmlName(), module.getButtonTitle(), controller);
+			moduleControllers.put(module.buttonTitle(), controller);
+			addButton(module.fxmlName(), module.buttonTitle(), controller);
 
 			if (controller instanceof IProfileLoadListener) {
 				profileManagerLayoutController.addProfileLoadListener((IProfileLoadListener) controller);
@@ -351,12 +395,45 @@ public class LauncherLayoutController implements IProfileLoadListener {
 		profileManagerLayoutController.addProfileLoadListener(this);
 	}
 
-	private void initializeLogModule() {
-		actionController = new LauncherActionController(this);
-		consoleLogLayoutController = new ConsoleLogLayoutController();
-		addButton("ConsoleLogLayout", "Logs", consoleLogLayoutController).fire();
 
+	@Override
+	public void onProfileLoad(ProfileAux profile) {
+		String version = getVersion();
+		stage.setTitle("Whiteout Survival Bot v" + version + " - " + profile.getName());
+		buttonStartStop.setDisable(false);
+		buttonPauseResume.setDisable(true);
+		selectProfileInComboBox(profile);
 	}
+
+	public void onBotStateChange(DTOBotState botState) {
+		if (botState != null) {
+			if (botState.getRunning()) {
+				if (botState.getPaused() != null && botState.getPaused()) {
+					// Bot is running but paused
+					buttonStartStop.setText("Stop");
+					buttonStartStop.setDisable(false);
+					buttonPauseResume.setText("Resume Bot");
+					buttonPauseResume.setDisable(false);
+					estado = true;
+				} else {
+					// Bot is running and active
+					buttonStartStop.setText("Stop");
+					buttonStartStop.setDisable(false);
+					buttonPauseResume.setText("Pause Bot");
+					buttonPauseResume.setDisable(false);
+					estado = true;
+				}
+			} else {
+				// Bot is stopped
+				buttonStartStop.setText("Start Bot");
+				buttonStartStop.setDisable(false);
+				buttonPauseResume.setText("Pause Bot");
+				buttonPauseResume.setDisable(true);
+				estado = false;
+			}
+		}
+	}
+
 	@FXML
 	public void handleButtonStartStop(ActionEvent event) {
 		if (!estado) {
@@ -397,21 +474,21 @@ public class LauncherLayoutController implements IProfileLoadListener {
 				AnchorPane.setRightAnchor(root, 0.0);
 				mainContentPane.getChildren().add(root);
 
-				// Remueve la clase de estilo "active" de todos los botones
+
 				for (Node node : buttonsContainer.getChildren()) {
 					if (node instanceof Button) {
 						node.getStyleClass().remove("active");
 					}
 				}
-				// Agrega la clase "active" al botón actual para resaltarlo
+
 				button.getStyleClass().add("active");
 			});
 
 			buttonsContainer.getChildren().add(button);
 			return button;
-                } catch (IOException e) {
-                        System.err.println("Failed to load module " + fxmlName + ": " + e.getMessage());
-                }
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
 
@@ -423,122 +500,16 @@ public class LauncherLayoutController implements IProfileLoadListener {
 		return type.cast(controller);
 	}
 
-        @Override
-       public void onProfileLoad(ProfileAux profile) {
-               currentProfile = profile;
-               List<ProfileAux> profiles = profileManagerLayoutController.getProfilesList();
-               currentProfileIndex = profiles.indexOf(profile);
-               labelProfileName.setText(profile.getName());
-               String photoPath = profile.getConfig(EnumConfigurationKey.PROFILE_IMAGE_PATH_STRING, String.class);
-               if (photoPath != null && !photoPath.trim().isEmpty()) {
-                       File photoFile = new File(photoPath);
-                       if (photoFile.exists()) {
-                               loadProfileImageAsync(photoFile);
-                       } else {
-                               imageProfile.setImage(null);
-                               imagePlaceholder.setVisible(true);
-                       }
-               } else {
-                       imageProfile.setImage(null);
-                       imagePlaceholder.setVisible(true);
-               }
-               String version = getVersion();
-               stage.setTitle("Whiteout Survival Bot v" + version + " - " + profile.getName());
-               buttonStartStop.setDisable(false);
-               buttonPauseResume.setDisable(true);
-       }
-
-       @FXML
-       private void handleChangePhoto() {
-               if (currentProfile == null) {
-                       return;
-               }
-               FileChooser fileChooser = new FileChooser();
-               fileChooser.setTitle("Select Profile Photo");
-               fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG Images", "*.png"));
-               File selectedFile = fileChooser.showOpenDialog(stage);
-               if (selectedFile != null) {
-                       loadProfileImageAsync(selectedFile);
-                       currentProfile.setConfig(EnumConfigurationKey.PROFILE_IMAGE_PATH_STRING, selectedFile.getAbsolutePath());
-                       profileManagerLayoutController.saveProfile(currentProfile);
-               }
-       }
-
-       @FXML
-       private void handlePrevProfile() {
-               List<ProfileAux> profiles = profileManagerLayoutController.getProfilesList();
-               if (profiles == null || profiles.isEmpty()) {
-                       return;
-               }
-               currentProfileIndex = (currentProfileIndex - 1 + profiles.size()) % profiles.size();
-               profileManagerLayoutController.loadProfile(profiles.get(currentProfileIndex));
-       }
-
-       @FXML
-       private void handleNextProfile() {
-               List<ProfileAux> profiles = profileManagerLayoutController.getProfilesList();
-               if (profiles == null || profiles.isEmpty()) {
-                       return;
-               }
-               currentProfileIndex = (currentProfileIndex + 1) % profiles.size();
-               profileManagerLayoutController.loadProfile(profiles.get(currentProfileIndex));
-       }
-
-	public void onBotStateChange(DTOBotState botState) {
-		if (botState != null) {
-			if (botState.getRunning()) {
-				if (botState.getPaused() != null && botState.getPaused()) {
-					// Bot is running but paused
-					buttonStartStop.setText("Stop");
-					buttonStartStop.setDisable(false);
-					buttonPauseResume.setText("Resume Bot");
-					buttonPauseResume.setDisable(false);
-					estado = true;
-				} else {
-					// Bot is running and active
-					buttonStartStop.setText("Stop");
-					buttonStartStop.setDisable(false);
-					buttonPauseResume.setText("Pause Bot");
-					buttonPauseResume.setDisable(false);
-					estado = true;
-				}
-			} else {
-				// Bot is stopped
-				buttonStartStop.setText("Start Bot");
-				buttonStartStop.setDisable(false);
-				buttonPauseResume.setText("Pause Bot");
-				buttonPauseResume.setDisable(true);
-				estado = false;
-			}
-		}
-	}
-
-	private static class ModuleDefinition {
-		private final String fxmlName;
-		private final String buttonTitle;
-		private final Supplier<Object> controllerSupplier;
-
-		public ModuleDefinition(String fxmlName, String buttonTitle, Supplier<Object> controllerSupplier) {
-			this.fxmlName = fxmlName;
-			this.buttonTitle = buttonTitle;
-			this.controllerSupplier = controllerSupplier;
-		}
+	private record ModuleDefinition(String fxmlName, String buttonTitle, Supplier<Object> controllerSupplier) {
 
 		public Object createController(IProfileChangeObserver profileObserver) {
-			Object controller = controllerSupplier.get();
-			if (controller instanceof IProfileObserverInjectable) {
-				((IProfileObserverInjectable) controller).setProfileObserver(profileObserver);
+				Object controller = controllerSupplier.get();
+				if (controller instanceof IProfileObserverInjectable) {
+					((IProfileObserverInjectable) controller).setProfileObserver(profileObserver);
+				}
+				return controller;
 			}
-			return controller;
-		}
 
-		public String getFxmlName() {
-			return fxmlName;
-		}
-
-		public String getButtonTitle() {
-			return buttonTitle;
-		}
 
 	}
 

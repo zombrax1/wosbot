@@ -2,10 +2,10 @@ package cl.camodev.wosbot.emulator;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -25,31 +25,26 @@ import org.slf4j.LoggerFactory;
 
 public class EmulatorManager {
 
-        private static final Logger logger = LoggerFactory.getLogger(EmulatorManager.class);
+	private static final Logger logger = LoggerFactory.getLogger(EmulatorManager.class);
 
-        private static final String WHITEOUT_PACKAGE_NAME = "com.gof.global";
-        private static volatile EmulatorManager instance;
-        private final ReentrantLock lock = new ReentrantLock();
-        private final Condition permitsAvailable = lock.newCondition();
-        private final PriorityQueue<WaitingThread> waitingQueue = new PriorityQueue<>();
-        private final AtomicInteger availableEmulatorSlots = new AtomicInteger();
-        private Emulator emulator;
-        private int maxRunningEmulators = 3;
+	public static String WHITEOUT_PACKAGE = "com.gof.global";
+	private static EmulatorManager instance;
+	private final ReentrantLock lock = new ReentrantLock();
+	private final Condition permitsAvailable = lock.newCondition();
+	private final PriorityQueue<WaitingThread> waitingQueue = new PriorityQueue<>();
+	private Emulator emulator;
+	private int MAX_RUNNING_EMULATORS = 3;
 
-        private EmulatorManager() {
+	private EmulatorManager() {
 
-        }
+	}
 
-        public static EmulatorManager getInstance() {
-                if (instance == null) {
-                        synchronized (EmulatorManager.class) {
-                                if (instance == null) {
-                                        instance = new EmulatorManager();
-                                }
-                        }
-                }
-                return instance;
-        }
+	public static EmulatorManager getInstance() {
+		if (instance == null) {
+			instance = new EmulatorManager();
+		}
+		return instance;
+	}
 
 	public void initialize() {
 		resetQueueState();
@@ -64,12 +59,7 @@ public class EmulatorManager {
 		if (savedActiveEmulator == null) {
 			throw new IllegalStateException("No active emulator set. Ensure an emulator is selected.");
 		}
-                maxRunningEmulators = Optional.ofNullable(
-                                globalConfig.get(EnumConfigurationKey.MAX_RUNNING_EMULATORS_INT.name()))
-                                .map(Integer::parseInt)
-                                .orElse(Integer.parseInt(
-                                                EnumConfigurationKey.MAX_RUNNING_EMULATORS_INT.getDefaultValue()));
-                availableEmulatorSlots.set(maxRunningEmulators);
+		MAX_RUNNING_EMULATORS = Optional.ofNullable(globalConfig.get(EnumConfigurationKey.MAX_RUNNING_EMULATORS_INT.name())).map(Integer::parseInt).orElse(Integer.parseInt(EnumConfigurationKey.MAX_RUNNING_EMULATORS_INT.getDefaultValue()));
 		try {
 			EmulatorType emulatorType = EmulatorType.valueOf(savedActiveEmulator);
 			String consolePath = globalConfig.get(emulatorType.getConfigKey());
@@ -100,100 +90,108 @@ public class EmulatorManager {
 		}
 	}
 
-        /**
-         * Ensures the emulator has been configured before executing any action.
-         */
+	/**
+	 * Verifica si el emulador ha sido configurado antes de ejecutar cualquier acción.
+	 */
 	private void checkEmulatorInitialized() {
 		if (emulator == null) {
 			throw new IllegalStateException();
 		}
 	}
 
-        /**
-         * Captures a screenshot from the emulator.
-         */
+	/**
+	 * Captura una pantalla del emulador.
+	 */
 	public byte[] captureScreenshotViaADB(String emulatorNumber) {
 		checkEmulatorInitialized();
 		return emulator.captureScreenshot(emulatorNumber);
 	}
 
-        /**
-         * Performs a tap at a specific coordinate.
-         */
+	/**
+	 * Realiza un tap en una coordenada específica.
+	 */
 	public void tapAtPoint(String emulatorNumber, DTOPoint point) {
 		checkEmulatorInitialized();
 		emulator.tapAtRandomPoint(emulatorNumber, point, point);
 
 	}
 
-        /**
-         * Performs a tap at a random coordinate within an area.
-         */
+	/**
+	 * Realiza un tap en una coordenada aleatoria dentro de un área.
+	 */
 	public boolean tapAtRandomPoint(String emulatorNumber, DTOPoint point1, DTOPoint point2) {
 		checkEmulatorInitialized();
 		return emulator.tapAtRandomPoint(emulatorNumber, point1, point2);
 	}
 
-        /**
-         * Performs multiple random taps within an area with a delay between them.
-         */
+	/**
+	 * Realiza múltiples taps aleatorios dentro de un área con un delay entre ellos.
+	 */
 	public boolean tapAtRandomPoint(String emulatorNumber, DTOPoint point1, DTOPoint point2, int tapCount, int delayMs) {
 		checkEmulatorInitialized();
 		return emulator.tapAtRandomPoint(emulatorNumber, point1, point2, tapCount, delayMs);
 	}
 
-        /**
-         * Performs a swipe between two points.
-         */
+	/**
+	 * Realiza un swipe entre dos puntos.
+	 */
 	public void executeSwipe(String emulatorNumber, DTOPoint start, DTOPoint end) {
 		checkEmulatorInitialized();
 		emulator.swipe(emulatorNumber, start, end);
 	}
 
-        /**
-         * Checks if an application is installed on the emulator.
-         */
-        public boolean isWhiteoutSurvivalInstalled(String emulatorNumber) {
-                checkEmulatorInitialized();
-                return emulator.isAppInstalled(emulatorNumber, WHITEOUT_PACKAGE_NAME);
-        }
+	/**
+	 * Verifica si una aplicación está instalada en el emulador.
+	 */
+	public boolean isWhiteoutSurvivalInstalled(String emulatorNumber) {
+		checkEmulatorInitialized();
+		return emulator.isAppInstalled(emulatorNumber, WHITEOUT_PACKAGE);
+	}
 
-        public static String getWhiteoutPackageName() {
-                return WHITEOUT_PACKAGE_NAME;
-        }
-
-        /**
-         * Presses the back button on the emulator.
-         */
+	/**
+	 * Presiona el botón de retroceso en el emulador.
+	 */
 	public void tapBackButton(String emulatorNumber) {
 		checkEmulatorInitialized();
 		emulator.pressBackButton(emulatorNumber);
 	}
 
-        /**
-         * Runs OCR on a region of the screen and extracts text.
-         */
+	/**
+	 * Ejecuta OCR en una región de la pantalla y extrae texto.
+	 */
 	public String ocrRegionText(String emulatorNumber, DTOPoint p1, DTOPoint p2) throws IOException, TesseractException {
 		checkEmulatorInitialized();
 		return emulator.ocrRegionText(emulatorNumber, p1, p2);
 	}
 
-        /**
-         * Searches for an image within the emulator's captured screen.
-         */
+	/**
+	 * Busca una imagen en la pantalla capturada del emulador.
+	 */
 	public DTOImageSearchResult searchTemplate(String emulatorNumber, String templatePath, DTOPoint topLeftCorner, DTOPoint bottomRightCorner , double threshold) {
 		checkEmulatorInitialized();
 		byte[] screenshot = captureScreenshotViaADB(emulatorNumber);
-                return ImageSearchUtil.findTemplate(screenshot, templatePath, topLeftCorner, bottomRightCorner, threshold);
+		return ImageSearchUtil.buscarTemplate(screenshot, templatePath, topLeftCorner, bottomRightCorner, threshold);
 	}
 
-        /**
-         * Searches for an image across the entire emulator screen.
-         */
+	/**
+	 * Busca una imagen en toda la pantalla del emulador.
+	 */
 	public DTOImageSearchResult searchTemplate(String emulatorNumber, String templatePath, double threshold) {
 		checkEmulatorInitialized();
 		byte[] screenshot = captureScreenshotViaADB(emulatorNumber);
-                return ImageSearchUtil.findTemplate(screenshot, templatePath, new DTOPoint(0,0), new DTOPoint(720,1280), threshold);
+		return ImageSearchUtil.buscarTemplate(screenshot, templatePath, new DTOPoint(0,0), new DTOPoint(720,1280), threshold);
+	}
+
+	public List<DTOImageSearchResult> searchTemplates(String emulatorNumber, String templatePath, DTOPoint topLeftCorner, DTOPoint bottomRightCorner , double threshold, int maxResults) {
+		checkEmulatorInitialized();
+		byte[] screenshot = captureScreenshotViaADB(emulatorNumber);
+		return ImageSearchUtil.searchTemplateMultiple(screenshot, templatePath, topLeftCorner, bottomRightCorner, threshold, maxResults);
+	}
+
+	public List<DTOImageSearchResult> searchTemplates(String emulatorNumber, String templatePath, double threshold, int maxResults) {
+		checkEmulatorInitialized();
+		byte[] screenshot = captureScreenshotViaADB(emulatorNumber);
+		return ImageSearchUtil.searchTemplateMultiple(screenshot, templatePath, new DTOPoint(0,0), new DTOPoint(720,1280), threshold, maxResults);
 	}
 
 	public void launchEmulator(String emulatorNumber) {
@@ -201,9 +199,9 @@ public class EmulatorManager {
 		emulator.launchEmulator(emulatorNumber);
 	}
 
-        /**
-         * Closes the emulator.
-         */
+	/**
+	 * Cierra el emulador.
+	 */
 	public void closeEmulator(String emulatorNumber) {
 		checkEmulatorInitialized();
 		emulator.closeEmulator(emulatorNumber);
@@ -229,41 +227,37 @@ public class EmulatorManager {
 		emulator.restartAdb();
 	}
 
-        /**
-         * Acquires a slot in the emulator queue for the given profile.
-         * The callback receives periodic position updates while waiting.
-         */
-        public void acquireEmulatorSlot(DTOProfiles profile, PositionCallback callback) throws InterruptedException {
+	public void adquireEmulatorSlot(DTOProfiles profile, PositionCallback callback) throws InterruptedException {
 		lock.lock();
 		try {
-                        // If a slot is available and nobody is waiting, acquire it immediately.
-                        logger.info("Profile {} is getting queue slot.", profile.getName());
-                        if (availableEmulatorSlots.get() > 0 && waitingQueue.isEmpty()) {
-                                logger.info("Profile {} acquired slot immediately.", profile.getName());
-                                availableEmulatorSlots.decrementAndGet();
-                                return;
-                        }
+			// Si hay slot disponible y nadie espera, se adquiere inmediatamente.
+			logger.info("Profile " + profile.getName() + " is getting queue slot.");
+			if (MAX_RUNNING_EMULATORS > 0 && waitingQueue.isEmpty()) {
+				logger.info("Profile " + profile.getName() + " acquired slot immediately.");
+				MAX_RUNNING_EMULATORS--;
+				return;
+			}
 
-                        // Create the object representing the current thread and its priority
-			WaitingThread currentWaiting = new WaitingThread(Thread.currentThread(), profile.getId());
+			// Crear el objeto que representa al hilo actual con su prioridad
+			WaitingThread currentWaiting = new WaitingThread(Thread.currentThread(), profile.getPriority());
 			waitingQueue.add(currentWaiting);
 
-                        // Wait with timeout in order to notify the position periodically.
+			// Esperar con timeout para poder notificar la posición periódicamente.
 
-                        while (waitingQueue.peek() != currentWaiting || availableEmulatorSlots.get() <= 0) {
-                                // Wait up to 1 second.
-                                permitsAvailable.await(1, TimeUnit.SECONDS);
+			while (waitingQueue.peek() != currentWaiting || MAX_RUNNING_EMULATORS <= 0) {
+				// Esperar hasta 1 segundo.
+				permitsAvailable.await(1, TimeUnit.SECONDS);
 
-                                // Query and notify the current thread position in the queue.
+				// Consultar y notificar la posición actual del hilo en la cola.
 				int position = getPosition(currentWaiting);
 				callback.onPositionUpdate(Thread.currentThread(), position);
 			}
-                        logger.info("Profile {} acquired slot", profile.getName());
-                        // It's this thread's turn and a slot is available.
-                        waitingQueue.poll(); // Remove the thread from the queue.
-                        availableEmulatorSlots.decrementAndGet(); // Acquire the slot.
+            logger.info("Profile {} acquired slot", profile.getName());
+			// Es el turno y hay slot disponible.
+			waitingQueue.poll(); // Remover el hilo de la cola.
+			MAX_RUNNING_EMULATORS--; // Adquirir el slot.
 
-                        // Notify all waiting threads to re-evaluate the condition.
+			// Notificar a los demás hilos para que vuelvan a evaluar la condición.
 			permitsAvailable.signalAll();
 		} finally {
 			lock.unlock();
@@ -273,9 +267,9 @@ public class EmulatorManager {
 	public void releaseEmulatorSlot(DTOProfiles profile) {
 		lock.lock();
 		try {
-                        logger.info("Profile {} is releasing queue slot.", profile.getName());
-                        availableEmulatorSlots.incrementAndGet();
-                        permitsAvailable.signalAll();
+            logger.info("Profile {} is releasing queue slot.", profile.getName());
+			MAX_RUNNING_EMULATORS++;
+			permitsAvailable.signalAll();
 		} finally {
 			lock.unlock();
 		}
@@ -295,12 +289,12 @@ public class EmulatorManager {
 	public void resetQueueState() {
 		lock.lock();
 		try {
-                        waitingQueue.clear();
-                        availableEmulatorSlots.set(maxRunningEmulators);
-                        permitsAvailable.signalAll();
+			waitingQueue.clear();
+			permitsAvailable.signalAll();
 		} finally {
 			lock.unlock();
 		}
 	}
 
 }
+

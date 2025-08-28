@@ -7,12 +7,15 @@ public enum EnumTemplates {
 	GAME_HOME_WORLD("/templates/world.png"),
 	GAME_HOME_PETS("/templates/home/petsButton.png"),
 	GAME_HOME_INTEL("/templates/home/intelButton.png"),
+	GAME_HOME_INTEL_DONE("/templates/intel/intelDone.png"),
+	GAME_HOME_RECONNECT("/templates/home/reconnectButton.png"),
 	
 	GAME_HOME_SHORTCUTS_INFANTRY("/templates/shortcuts/infantry.png"),
 	GAME_HOME_SHORTCUTS_LANCER("/templates/shortcuts/lancer.png"),
 	GAME_HOME_SHORTCUTS_MARKSMAN("/templates/shortcuts/marksman.png"),
 	GAME_HOME_SHORTCUTS_RESEARCH_CENTER("/templates/shortcuts/researchCenter.png"),
 	GAME_HOME_SHORTCUTS_HELP_REQUEST("/templates/shortcuts/helpRequest.png"),
+	GAME_HOME_SHORTCUTS_HELP_REQUEST2("/templates/shortcuts/helpRequest2.png"),
 	
 	GAME_HOME_SHORTCUTS_UPGRADE("/templates/shortcuts/upgrade.png"),
 	GAME_HOME_SHORTCUTS_OBTAIN("/templates/shortcuts/obtain.png"),
@@ -33,6 +36,7 @@ public enum EnumTemplates {
 	BUILDING_BUTTON_SPEED("/templates/building/speedButton.png"),
 	BUILDING_BUTTON_UPGRADE("/templates/building/upgradeButton.png"),
 	BUILDING_BUTTON_DETAILS("/templates/building/detailsButton.png"),
+	BUILDING_BUTTON_RESEARCH("/templates/building/researchButton.png"),
 
 	BUILDING_DETAILS_INFANTRY("/templates/building/detailsInfantry.png"),
 	BUILDING_DETAILS_LANCER("/templates/building/detailsLancer.png"),
@@ -56,12 +60,12 @@ public enum EnumTemplates {
 	
 	GAME_HOME_SHORTCUTS_FARM_TICK("/templates/shortcuts/farmTick.png"),
 	GAME_HOME_SHORTCUTS_FARM_GATHER("/templates/shortcuts/farmGather.png"),
-	
-	RALLY_REMOVE_HERO_BUTTON("/templates/rally/removeHeroButton.png"),
-	RALLY_GATHER_BUTTON("/templates/rally/gatherButton.png"),
-	RALLY_GATHER_ALREADY_MARCHING("/templates/rally/gatherAlreadyMarching.png"),
-	RALLY_POLAR_BUTTON("/templates/rally/rallyPolarButton.png"),
 
+	GATHER_DEPLOY_BUTTON("/templates/shortcuts/gatherDeploy.png"),
+
+	TROOPS_ALREADY_MARCHING("/templates/rally/troopsAlreadyMarching.png"),
+	RALLY_BUTTON("/templates/rally/rallyButton.png"),
+    RALLY_REMOVE_HERO_BUTTON("/templates/rally/removeHeroButton.png"),
 	RALLY_EQUALIZE_BUTTON("/templates/rally/equalizeButton.png"),
 	
 	HOME_DEALS_BUTTON("/templates/home/dealsButton.png"),
@@ -74,6 +78,7 @@ public enum EnumTemplates {
 	CRYSTAL_LAB_FC_BUTTON("/templates/crystallab/fcButton.png"),
 	
 	ALLIANCE_CHEST_BUTTON("/templates/alliance/chestButton.png"),
+	ALLIANCE_HONOR_CHEST("/templates/alliance/honorChest.png"),
 	ALLIANCE_TECH_BUTTON("/templates/alliance/techButton.png"),
 	ALLIANCE_TRIUMPH_BUTTON("/templates/alliance/triumphButton.png"),
 	ALLIANCE_TRIUMPH_DAILY_CLAIMED("/templates/alliance/triumphDailyClaimed.png"),
@@ -84,8 +89,8 @@ public enum EnumTemplates {
 	ALLIANCE_HELP_BUTTON("/templates/alliance/helpButton.png"),
 	ALLIANCE_HELP_REQUESTS("/templates/alliance/helpRequests.png"),
 	
-	
-	ALLIANCE_CHEST_LOOT_CLAIM_BUTTON("/templates/alliance/lootClaimAllButton.png"),
+	ALLIANCE_CHEST_CLAIM_BUTTON("/templates/dailymission/claimButton.png"),
+	ALLIANCE_CHEST_CLAIM_ALL_BUTTON("/templates/alliance/lootClaimAllButton.png"),
 	
 	STOREHOUSE_CHEST("/templates/storehouse/chest.png"),
 	STOREHOUSE_STAMINA("/templates/storehouse/stamina.png"),
@@ -101,10 +106,10 @@ public enum EnumTemplates {
 	INTEL_ATTACK("/templates/intel/beastAttack.png"),
 	INTEL_RESCUE("/templates/intel/survivorRescue.png"),
 	INTEL_EXPLORE("/templates/intel/journeyExplore.png"),
-	INTEL_ATTACK_CONFIRM("/templates/intel/beastAttackConfirm.png"),
-	
 	INTEL_FIRE_BEAST("/templates/intel/beastFire.png"),
-
+	INTEL_SCREEN("/templates/intel/intelScreen.png"),
+	
+	DEPLOY_BUTTON("/templates/intel/deploy.png"),
 
 	INTEL_BEAST_YELLOW("/templates/intel/beast10.png"),
 	INTEL_BEAST_PURPLE("/templates/intel/beast9.png"),
@@ -240,8 +245,28 @@ public enum EnumTemplates {
 	TRAINING_MARKSMAN_T4("/templates/training/marksman4.png"),
 	TRAINING_MARKSMAN_T3("/templates/training/marksman3.png"),
 	TRAINING_MARKSMAN_T2("/templates/training/marksman2.png"),
-	TRAINING_MARKSMAN_T1("/templates/training/marksman1.png")
+	TRAINING_MARKSMAN_T1("/templates/training/marksman1.png"),
 
+	MAIL_UNCLAIMED_REWARDS("/templates/mail/unclaimedRewards.png"),
+
+	VALIDATION_WAR_ACADEMY_UI("/templates/validation/warAcademy.png"),
+
+	TUNDRA_TRUCK_TAB("/templates/tundratruck/tundraTruckTab.png"),
+	TUNDRA_TRUCK_ARRIVED("/templates/tundratruck/tundraTruckArrived.png"),
+	TUNDRA_TRUCK_YELLOW("/templates/tundratruck/tundraTruckLegendary.png"),
+	TUNDRA_TRUCK_PURPLE("/templates/tundratruck/tundraTruckEpic.png"),
+	TUNDRA_TRUCK_BLUE("/templates/tundratruck/tundraTruckRare.png"),
+	TUNDRA_TRUCK_GREEN("/templates/tundratruck/tundraTruckNormal.png"),
+	TUNDRA_TRUCK_REFRESH("/templates/tundratruck/tundraTruckRefresh.png"),
+	TUNDRA_TRUCK_REFRESH_GEMS("/templates/tundratruck/tundraTruckRefreshGems.png"),
+	TUNDRA_TRUCK_YELLOW_RAID("/templates/tundratruck/tundraTruckLegendaryRaid.png"),
+	TUNDRA_TRUCK_ESCORT("/templates/tundratruck/tundraTruckEscort.png"),
+	TUNDRA_TRUCK_DEPARTED("/templates/tundratruck/tundraTruckDeparted.png"),
+	TUNDRA_TRUCK_ENDED("/templates/tundratruck/tundraTruckEnded.png"),
+
+	TUNDRA_TREK_SUPPLIES("/templates/tundratrek/trekSupplies.png"),
+	TUNDRA_TREK_CLAIM_BUTTON("/templates/tundratrek/trekClaimButton.png")
+	
 	;
 	// @formatter:on
 

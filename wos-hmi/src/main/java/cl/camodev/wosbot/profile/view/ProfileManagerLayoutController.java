@@ -1,15 +1,12 @@
 package cl.camodev.wosbot.profile.view;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import cl.camodev.wosbot.console.enumerable.EnumConfigurationKey;
 import cl.camodev.wosbot.console.enumerable.EnumTpMessageSeverity;
-import cl.camodev.wosbot.launcher.view.ILauncherConstants;
 import cl.camodev.wosbot.ot.DTOProfileStatus;
 import cl.camodev.wosbot.ot.DTOProfiles;
 import cl.camodev.wosbot.profile.controller.ProfileManagerActionController;
@@ -28,7 +25,6 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -42,15 +38,11 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Callback;
 import javafx.util.Duration;
-import javafx.stage.FileChooser;
 
 public class ProfileManagerLayoutController implements IProfileChangeObserver {
 
-    // Serialize profile operations to avoid SQLite write contention
-    private final ExecutorService profileQueueExecutor = Executors.newSingleThreadExecutor();
-    private static final String JSON_FILTER_DESCRIPTION = "JSON Files";
-    private static final String JSON_FILTER_EXTENSION = "*.json";
-        private ProfileManagerActionController profileManagerActionController;
+	private final ExecutorService profileQueueExecutor = Executors.newSingleThreadExecutor();
+	private ProfileManagerActionController profileManagerActionController;
 	private ObservableList<ProfileAux> profiles;
 	private SortedList<ProfileAux> sortedProfiles;
 	@FXML
@@ -62,17 +54,15 @@ public class ProfileManagerLayoutController implements IProfileChangeObserver {
 	@FXML
 	private TableColumn<ProfileAux, Boolean> columnEnabled;
 	@FXML
-        private TableColumn<ProfileAux, String> columnProfileName;
-        @FXML
-        private TableColumn<ProfileAux, String> columnStatus;
-        @FXML
-        private Button btnBulkUpdate;
-       @FXML
-       private Button btnExportProfiles;
-       @FXML
-       private Button btnImportProfiles;
+	private TableColumn<ProfileAux, String> columnProfileName;
+	@FXML
+	private TableColumn<ProfileAux, Long> columnPriority;
+	@FXML
+	private TableColumn<ProfileAux, String> columnStatus;
+	@FXML
+	private Button btnBulkUpdate;
 	private Long loadedProfileId;
-        private List<IProfileLoadListener> profileLoadListeners;
+	private List<IProfileLoadListener> profileLoadListeners;
 
 	@FXML
 	private void initialize() {
@@ -86,24 +76,25 @@ public class ProfileManagerLayoutController implements IProfileChangeObserver {
 		profileManagerActionController = new ProfileManagerActionController(this);
 	}
 
-        private void initializeTableView() {
+	private void initializeTableView() {
 		profiles = FXCollections.observableArrayList();
 
 		columnProfileName.setCellValueFactory(cellData -> cellData.getValue().nameProperty());
 		columnEmulatorNumber.setCellValueFactory(cellData -> cellData.getValue().emulatorNumberProperty());
-               columnStatus.setCellValueFactory(cellData -> cellData.getValue().statusProperty());
+		columnPriority.setCellValueFactory(cellData -> cellData.getValue().priorityProperty().asObject());
+		columnStatus.setCellValueFactory(cellData -> cellData.getValue().statusProperty());
 
-               // Add double-click event handler to open edit dialog
-               tableviewLogMessages.setRowFactory(tv -> {
-                        javafx.scene.control.TableRow<ProfileAux> row = new javafx.scene.control.TableRow<>();
-                        row.setOnMouseClicked(event -> {
-                                if (event.getClickCount() == 2 && (!row.isEmpty())) {
-                                        ProfileAux selectedProfile = row.getItem();
-                                        profileManagerActionController.showEditProfileDialog(selectedProfile, tableviewLogMessages);
-                                }
-                        });
-                        return row;
-               });
+		// Add double-click event handler to open edit dialog
+		tableviewLogMessages.setRowFactory(tv -> {
+			javafx.scene.control.TableRow<ProfileAux> row = new javafx.scene.control.TableRow<>();
+			row.setOnMouseClicked(event -> {
+				if (event.getClickCount() == 2 && (!row.isEmpty())) {
+					ProfileAux selectedProfile = row.getItem();
+					profileManagerActionController.showEditProfileDialog(selectedProfile, tableviewLogMessages);
+				}
+			});
+			return row;
+		});
 
 		columnDelete.setCellFactory(new Callback<TableColumn<ProfileAux, Void>, TableCell<ProfileAux, Void>>() {
 			@Override
@@ -142,7 +133,7 @@ public class ProfileManagerLayoutController implements IProfileChangeObserver {
 							ProfileAux currentProfile = getTableView().getItems().get(getIndex());
 							System.out.println("Eliminando perfil con ID: " + currentProfile.getId());
 
-							boolean deletionResult = profileManagerActionController.deleteProfile(new DTOProfiles(currentProfile.getId(), null, null, null));
+							boolean deletionResult = profileManagerActionController.deleteProfile(new DTOProfiles(currentProfile.getId()));
 
 							Alert alert;
 							if (deletionResult) {
@@ -301,57 +292,16 @@ public class ProfileManagerLayoutController implements IProfileChangeObserver {
 	}
 
 	@FXML
-        void handleButtonBulkUpdateProfiles(ActionEvent event) {
-                profileManagerActionController.showBulkUpdateDialog(loadedProfileId, profiles, btnBulkUpdate);
-        }
+	void handleButtonBulkUpdateProfiles(ActionEvent event) {
+		profileManagerActionController.showBulkUpdateDialog(loadedProfileId, profiles, btnBulkUpdate);
+	}
 
-       @FXML
-       void handleButtonExportProfiles(ActionEvent event) {
-                FileChooser fileChooser = new FileChooser();
-                fileChooser.getExtensionFilters()
-                                .add(new FileChooser.ExtensionFilter(JSON_FILTER_DESCRIPTION, JSON_FILTER_EXTENSION));
-               File selectedFile = fileChooser.showSaveDialog(btnExportProfiles.getScene().getWindow());
-               if (selectedFile != null) {
-                       boolean exported = profileManagerActionController.exportProfiles(selectedFile);
-                       Alert alert;
-                       if (exported) {
-                               alert = new Alert(Alert.AlertType.INFORMATION, "Profiles exported successfully", ButtonType.OK);
-                       } else {
-                               alert = new Alert(Alert.AlertType.ERROR, "Error exporting profiles", ButtonType.OK);
-                       }
-                       alert.showAndWait();
-               }
-       }
-
-       @FXML
-       void handleButtonImportProfiles(ActionEvent event) {
-                FileChooser fileChooser = new FileChooser();
-                fileChooser.getExtensionFilters()
-                                .add(new FileChooser.ExtensionFilter(JSON_FILTER_DESCRIPTION, JSON_FILTER_EXTENSION));
-               File selectedFile = fileChooser.showOpenDialog(btnImportProfiles.getScene().getWindow());
-               if (selectedFile != null) {
-                       boolean imported = profileManagerActionController.importProfiles(selectedFile);
-                       Alert alert;
-                       if (imported) {
-                               alert = new Alert(Alert.AlertType.INFORMATION, "Profiles imported successfully", ButtonType.OK);
-                               loadProfiles();
-                       } else {
-                               alert = new Alert(Alert.AlertType.ERROR, "Error importing profiles", ButtonType.OK);
-                       }
-                       alert.showAndWait();
-               }
-       }
-
-       public boolean saveProfile(ProfileAux profile) {
-               return profileManagerActionController.saveProfile(profile);
-       }
-
-        public void loadProfiles() {
-                profileManagerActionController.loadProfiles(dtoProfiles -> {
+	public void loadProfiles() {
+		profileManagerActionController.loadProfiles(dtoProfiles -> {
 			Platform.runLater(() -> {
 				profiles.clear();
 				dtoProfiles.forEach(dtoProfile -> {
-					ProfileAux profileAux = new ProfileAux(dtoProfile.getId(), dtoProfile.getName(), dtoProfile.getEmulatorNumber(), dtoProfile.getEnabled(), "NOT RUNNING");
+					ProfileAux profileAux = new ProfileAux(dtoProfile.getId(), dtoProfile.getName(), dtoProfile.getEmulatorNumber(), dtoProfile.getEnabled(), dtoProfile.getPriority(), "NOT RUNNING", dtoProfile.getReconnectionTime());
 					dtoProfile.getConfigs().forEach(config -> {
 						profileAux.getConfigs().add(new ConfigAux(config.getNombreConfiguracion(), config.getValor()));
 					});
@@ -368,31 +318,30 @@ public class ProfileManagerLayoutController implements IProfileChangeObserver {
 		});
 	}
 
-	private void notifyProfileLoadListeners(ProfileAux currentProfile) {
+	public void addProfileLoadListener(IProfileLoadListener moduleController) {
+		if (profileLoadListeners == null) {
+			profileLoadListeners = new ArrayList<>();
+		}
+		profileLoadListeners.add(moduleController);
+	}
+
+	public javafx.collections.ObservableList<ProfileAux> getProfiles() {
+		return profiles;
+	}
+
+	public void setLoadedProfileId(Long profileId) {
+		this.loadedProfileId = profileId;
+	}
+
+	public Long getLoadedProfileId() {
+		return loadedProfileId;
+	}
+
+	public void notifyProfileLoadListeners(ProfileAux currentProfile) {
 		if (profileLoadListeners != null) {
 			profileLoadListeners.forEach(listener -> listener.onProfileLoad(currentProfile));
 		}
-
 	}
-
-        public void addProfileLoadListener(IProfileLoadListener moduleController) {
-                if (profileLoadListeners == null) {
-                        profileLoadListeners = new ArrayList<>();
-                }
-                profileLoadListeners.add(moduleController);
-        }
-
-       public List<ProfileAux> getProfilesList() {
-               return Collections.unmodifiableList(profiles);
-       }
-
-       public void loadProfile(ProfileAux profile) {
-               if (profile == null) {
-                       return;
-               }
-               loadedProfileId = profile.getId();
-               notifyProfileLoadListeners(profile);
-       }
 
 	public void handleProfileStatusChange(DTOProfileStatus status) {
 		Platform.runLater(() -> {
@@ -420,9 +369,10 @@ public class ProfileManagerLayoutController implements IProfileChangeObserver {
 				profileManagerActionController.saveProfile(loadedProfile);
 			});
 
-                } catch (Exception e) {
-                        ServLogs.getServices().appendLog(EnumTpMessageSeverity.ERROR, "Profile Manager", "-", "Error while saving profile: " + e.getMessage());
-                }
+		} catch (Exception e) {
+			e.printStackTrace();
+			ServLogs.getServices().appendLog(EnumTpMessageSeverity.ERROR, "Profile Manager", "-", "Error while saving profile: " + e.getMessage());
+		}
 	}
 
 }

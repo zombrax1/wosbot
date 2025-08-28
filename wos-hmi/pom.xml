@@ -52,8 +52,8 @@
 			</dependency>
 			<!-- Binding/implementación en tiempo de ejecución -->
 		<dependency>
-                        <groupId>ch.qos.logback</groupId>
-                        <artifactId>logback-classic</artifactId>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 
@@ -132,6 +132,22 @@
 							<resources>
 								<resource>
 									<directory>${project.basedir}/lib/tesseract</directory>
+									<filtering>false</filtering>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy-adb</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/adb</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${project.basedir}/adb</directory>
 									<filtering>false</filtering>
 								</resource>
 							</resources>

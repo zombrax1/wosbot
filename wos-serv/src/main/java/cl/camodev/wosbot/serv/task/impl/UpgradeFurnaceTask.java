@@ -10,13 +10,10 @@ import java.util.regex.Pattern;
 import cl.camodev.wosbot.console.enumerable.EnumTemplates;
 import cl.camodev.wosbot.console.enumerable.EnumTpMessageSeverity;
 import cl.camodev.wosbot.console.enumerable.TpDailyTaskEnum;
-import cl.camodev.wosbot.emulator.EmulatorManager;
 import cl.camodev.wosbot.ot.DTOImageSearchResult;
 import cl.camodev.wosbot.ot.DTOPoint;
 import cl.camodev.wosbot.ot.DTOProfiles;
 import cl.camodev.wosbot.ot.DTOTaskState;
-import cl.camodev.wosbot.serv.impl.ServLogs;
-import cl.camodev.wosbot.serv.impl.ServScheduler;
 import cl.camodev.wosbot.serv.impl.ServTaskManager;
 import cl.camodev.wosbot.serv.task.DelayedTask;
 
@@ -123,7 +120,7 @@ public class UpgradeFurnaceTask extends DelayedTask {
 								// click on go button
 								emuManager.tapAtRandomPoint(EMULATOR_NUMBER, upgradeGoButton.getPoint(), upgradeGoButton.getPoint());
 								sleepTask(1000);
-								emuManager.tapAtRandomPoint(EMULATOR_NUMBER, new DTOPoint(330, 729), new DTOPoint(364, 731), 10, 10);
+								emuManager.tapAtRandomPoint(EMULATOR_NUMBER, new DTOPoint(330, 716), new DTOPoint(364, 721), 10, 100);
 
 								DTOImageSearchResult upgradeButton = emuManager.searchTemplate(EMULATOR_NUMBER, EnumTemplates.GAME_HOME_SHORTCUTS_UPGRADE.getTemplate(),  90);
 								if (upgradeButton.isFound()) {
@@ -253,9 +250,9 @@ public class UpgradeFurnaceTask extends DelayedTask {
 				}
 
 
-                        } catch (Exception e) {
-                                ServLogs.getServices().appendLog(EnumTpMessageSeverity.ERROR, taskName, profile.getName(), "Error upgrading furnace: " + e.getMessage());
-                        }
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 
 		} else{
 			emuManager.tapBackButton(EMULATOR_NUMBER);

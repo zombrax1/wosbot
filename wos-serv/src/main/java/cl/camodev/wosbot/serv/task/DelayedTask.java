@@ -5,12 +5,15 @@ import cl.camodev.wosbot.console.enumerable.EnumTpMessageSeverity;
 import cl.camodev.wosbot.console.enumerable.TpDailyTaskEnum;
 import cl.camodev.wosbot.emulator.EmulatorManager;
 import cl.camodev.wosbot.ex.HomeNotFoundException;
+import cl.camodev.wosbot.ex.ProfileInReconnectStateException;
 import cl.camodev.wosbot.ot.DTOImageSearchResult;
 import cl.camodev.wosbot.ot.DTOPoint;
 import cl.camodev.wosbot.ot.DTOProfiles;
 import cl.camodev.wosbot.serv.impl.ServLogs;
 import cl.camodev.wosbot.serv.impl.ServScheduler;
 import cl.camodev.wosbot.serv.task.impl.InitializeTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -19,7 +22,9 @@ import java.util.Objects;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
-public abstract class DelayedTask implements Runnable, Delayed, Comparable<Delayed> {
+public abstract class DelayedTask implements Runnable, Delayed {
+
+    private static final Logger logger = LoggerFactory.getLogger(DelayedTask.class);
 
     protected volatile boolean recurring = true;
     protected LocalDateTime lastExecutionTime;
@@ -71,6 +76,11 @@ public abstract class DelayedTask implements Runnable, Delayed, Comparable<Delay
         for (int attempt = 1; attempt <= 10; attempt++) {
             DTOImageSearchResult home = emuManager.searchTemplate(EMULATOR_NUMBER, EnumTemplates.GAME_HOME_FURNACE.getTemplate(), 90);
             DTOImageSearchResult world = emuManager.searchTemplate(EMULATOR_NUMBER, EnumTemplates.GAME_HOME_WORLD.getTemplate(), 90);
+            DTOImageSearchResult reconnect = emuManager.searchTemplate(EMULATOR_NUMBER, EnumTemplates.GAME_HOME_RECONNECT.getTemplate(), 90);
+
+            if (reconnect.isFound()) {
+                throw new ProfileInReconnectStateException("Profile " + profile.getName() + " is in reconnect state, cannot execute task: " + taskName);
+            }
 
             if (home.isFound() || world.isFound()) {
                 // Found either home or world, now check if we need to navigate to the correct location
@@ -145,8 +155,8 @@ public abstract class DelayedTask implements Runnable, Delayed, Comparable<Delay
 
     protected void sleepTask(long millis) {
         try {
-            long speedFactor = (long) (millis*1.3);
-            Thread.sleep(speedFactor);
+            //long speedFactor = (long) (millis*1.3);
+            Thread.sleep(millis);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Task was interrupted during sleep", e);
@@ -227,18 +237,22 @@ public abstract class DelayedTask implements Runnable, Delayed, Comparable<Delay
     }
 
     public void logInfo(String message) {
+        logger.info(message);
         servLogs.appendLog(EnumTpMessageSeverity.INFO, taskName, profile.getName(), message);
     }
 
     public void logWarning(String message) {
+        logger.warn(message);
         servLogs.appendLog(EnumTpMessageSeverity.WARNING, taskName, profile.getName(), message);
     }
 
     public void logError(String message) {
+        logger.error(message);
         servLogs.appendLog(EnumTpMessageSeverity.ERROR, taskName, profile.getName(), message);
     }
 
     public void logDebug(String message) {
+        logger.debug(message);
         servLogs.appendLog(EnumTpMessageSeverity.DEBUG, taskName, profile.getName(), message);
     }
 
