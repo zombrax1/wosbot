@@ -44,6 +44,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -67,11 +69,17 @@ public class LauncherLayoutController implements IProfileLoadListener {
 	@FXML
 	private Label labelRunTime;
 
-	@FXML
-	private Label labelVersion;
+    @FXML
+    private Label labelVersion;
 
-	@FXML
-	private ComboBox<ProfileAux> profileComboBox;
+    @FXML
+    private ComboBox<ProfileAux> profileComboBox;
+
+    @FXML
+    private ImageView imageProfile;
+
+    @FXML
+    private Label labelProfileName;
 
 	private Stage stage;
 
@@ -90,24 +98,14 @@ public class LauncherLayoutController implements IProfileLoadListener {
 		this.stage = stage;
 	}
 
-	@FXML
-	private void initialize() {
-		initializeDiscordBot();
-		initializeEmulatorManager();
-		initializeLogModule();
-		initializeProfileModule();
-		initializeProfileComboBox();
-		initializeModules();
-		initializeExternalLibraries();
-		initializeEmulatorManager();
-		showVersion();
 
-	}
 
-	private void showVersion() {
-		String version = getVersion();
-		labelVersion.setText("Version: " + version);
-	}
+    
+
+    private void showVersion() {
+        String version = getVersion();
+        labelVersion.setText("Version: " + version);
+    }
 
 	private String getVersion() {
 		// If running as JAR
@@ -260,11 +258,14 @@ public class LauncherLayoutController implements IProfileLoadListener {
 		addButton("ConsoleLogLayout", "Logs", consoleLogLayoutController).fire();
 	}
 
-	private void initializeProfileModule() {
-		profileManagerLayoutController = new ProfileManagerLayoutController();
-		actionController.setProfileManagerController(profileManagerLayoutController);
-		addButton("ProfileManagerLayout", "Profiles", profileManagerLayoutController);
-	}
+    private void initializeProfileModule() {
+        profileManagerLayoutController = new ProfileManagerLayoutController();
+        actionController.setProfileManagerController(profileManagerLayoutController);
+        Button profilesBtn = addButton("ProfileManagerLayout", "Profiles", profileManagerLayoutController);
+        if (profilesBtn != null) {
+            profilesBtn.fire();
+        }
+    }
 
 	private void initializeProfileComboBox() {
 
@@ -353,57 +354,119 @@ public class LauncherLayoutController implements IProfileLoadListener {
 		actionController.refreshProfileComboBox();
 	}
 
-	private void initializeExternalLibraries() {
-		try {
-			ImageSearchUtil.loadNativeLibrary("/native/opencv/opencv_java4110.dll");
-		} catch (IOException e) {
-			e.printStackTrace();
+    private void initializeExternalLibraries() {
+        try {
+            ImageSearchUtil.loadNativeLibrary("/native/opencv/opencv_java4110.dll");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @FXML
+    private void initialize() {
+        initializeDiscordBot();
+        initializeEmulatorManager();
+        initializeLogModule();
+        initializeModules();
+        initializeProfileComboBox();
+        initializeExternalLibraries();
+        initializeEmulatorManager();
+        showVersion();
+
+    }
+
+    private void initializeModules() {
+        //@formatter:off
+        List<ModuleDefinition> modules = Arrays.asList(
+                new ModuleDefinition("ProfileManagerLayout", "Profiles", ProfileManagerLayoutController::new),
+                new ModuleDefinition("TaskManagerLayout", "Task Manager", TaskManagerLayoutController::new),
+                new ModuleDefinition("CityUpgradesLayout", "City Upgrades", CityUpgradesLayoutController::new),
+                new ModuleDefinition("CityEventsLayout", "City Events", CityEventsLayoutController::new),
+                new ModuleDefinition("ShopLayout", "Shop", ShopLayoutController::new),
+                new ModuleDefinition("GatherLayout", "Gather", GatherLayoutController::new),
+                new ModuleDefinition("IntelLayout", "Intel", IntelLayoutController::new),
+                new ModuleDefinition("AllianceLayout", "Alliance", AllianceLayoutController::new),
+                new ModuleDefinition("TrainingLayout", "Training", TrainingLayoutController::new),
+                new ModuleDefinition("PetsLayout", "Pets", PetsLayoutController::new),
+                new ModuleDefinition("EventsLayout", "Events", EventsLayoutController::new),
+                new ModuleDefinition("EmuConfigLayout", "Config", EmuConfigLayoutController::new)
+                
+                );
+        //@formatter:on
+
+        for (ModuleDefinition module : modules) {
+            consoleLogLayoutController.appendMessage(new DTOLogMessage(EnumTpMessageSeverity.INFO, "Loading module: " + module.buttonTitle(), "-", "-"));
+
+
+            Object controller = module.createController(profileManagerLayoutController);
+            if (controller instanceof ProfileManagerLayoutController) {
+                profileManagerLayoutController = (ProfileManagerLayoutController) controller;
+                if (actionController == null) {
+                    actionController = new LauncherActionController(this);
+                }
+                actionController.setProfileManagerController(profileManagerLayoutController);
+            }
+            moduleControllers.put(module.buttonTitle(), controller);
+            addButton(module.fxmlName(), module.buttonTitle(), controller);
+
+            if (controller instanceof IProfileLoadListener && profileManagerLayoutController != null) {
+                profileManagerLayoutController.addProfileLoadListener((IProfileLoadListener) controller);
+            }
+        }
+        if (profileManagerLayoutController != null) {
+            profileManagerLayoutController.addProfileLoadListener(this);
+        }
+    }
+
+	// Handlers referenced by FXML
+	@FXML
+	private void handlePrevProfile(ActionEvent event) {
+		if (profileComboBox == null || profileComboBox.getItems().isEmpty()) return;
+		int idx = profileComboBox.getSelectionModel().getSelectedIndex();
+		int size = profileComboBox.getItems().size();
+		int newIdx = (idx <= 0) ? size - 1 : idx - 1;
+		ProfileAux target = profileComboBox.getItems().get(newIdx);
+		selectProfileInComboBox(target);
+		actionController.selectProfile(target);
+	}
+
+	@FXML
+	private void handleNextProfile(ActionEvent event) {
+		if (profileComboBox == null || profileComboBox.getItems().isEmpty()) return;
+		int idx = profileComboBox.getSelectionModel().getSelectedIndex();
+		int size = profileComboBox.getItems().size();
+		int newIdx = (idx >= size - 1) ? 0 : idx + 1;
+		ProfileAux target = profileComboBox.getItems().get(newIdx);
+		selectProfileInComboBox(target);
+		actionController.selectProfile(target);
+	}
+
+	@FXML
+	private void handleChangePhoto(ActionEvent event) {
+		FileChooser chooser = new FileChooser();
+		chooser.setTitle("Select Profile Photo");
+		chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg"));
+		File selected = chooser.showOpenDialog(stage);
+		if (selected != null && imageProfile != null) {
+			try {
+				imageProfile.setImage(new Image(selected.toURI().toString()));
+			} catch (Exception ignore) {}
 		}
-
-	}
-
-	private void initializeModules() {
-		//@formatter:off
-		List<ModuleDefinition> modules = Arrays.asList(				
-				new ModuleDefinition("TaskManagerLayout", "Task Manager", TaskManagerLayoutController::new),
-				new ModuleDefinition("CityUpgradesLayout", "City Upgrades", CityUpgradesLayoutController::new),
-				new ModuleDefinition("CityEventsLayout", "City Events", CityEventsLayoutController::new),
-				new ModuleDefinition("ShopLayout", "Shop", ShopLayoutController::new),
-				new ModuleDefinition("GatherLayout", "Gather", GatherLayoutController::new),
-				new ModuleDefinition("IntelLayout", "Intel", IntelLayoutController::new),
-				new ModuleDefinition("AllianceLayout", "Alliance", AllianceLayoutController::new),
-				new ModuleDefinition("TrainingLayout", "Training", TrainingLayoutController::new),
-				new ModuleDefinition("PetsLayout", "Pets", PetsLayoutController::new),
-				new ModuleDefinition("EventsLayout", "Events", EventsLayoutController::new),
-				new ModuleDefinition("EmuConfigLayout", "Config", EmuConfigLayoutController::new)
-				
-				);
-		//@formatter:on
-
-		for (ModuleDefinition module : modules) {
-			consoleLogLayoutController.appendMessage(new DTOLogMessage(EnumTpMessageSeverity.INFO, "Loading module: " + module.buttonTitle(), "-", "-"));
-
-
-			Object controller = module.createController(profileManagerLayoutController);
-			moduleControllers.put(module.buttonTitle(), controller);
-			addButton(module.fxmlName(), module.buttonTitle(), controller);
-
-			if (controller instanceof IProfileLoadListener) {
-				profileManagerLayoutController.addProfileLoadListener((IProfileLoadListener) controller);
-			}
-		}
-		profileManagerLayoutController.addProfileLoadListener(this);
 	}
 
 
-	@Override
-	public void onProfileLoad(ProfileAux profile) {
-		String version = getVersion();
-		stage.setTitle("Whiteout Survival Bot v" + version + " - " + profile.getName());
-		buttonStartStop.setDisable(false);
-		buttonPauseResume.setDisable(true);
-		selectProfileInComboBox(profile);
-	}
+    @Override
+    public void onProfileLoad(ProfileAux profile) {
+        String version = getVersion();
+        stage.setTitle("Whiteout Survival Bot v" + version + " - " + profile.getName());
+        buttonStartStop.setDisable(false);
+        buttonPauseResume.setDisable(true);
+        selectProfileInComboBox(profile);
+        if (labelProfileName != null) {
+            labelProfileName.setText(profile.getName());
+        }
+    }
 
 	public void onBotStateChange(DTOBotState botState) {
 		if (botState != null) {

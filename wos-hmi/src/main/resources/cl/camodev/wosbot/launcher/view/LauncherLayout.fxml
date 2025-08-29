@@ -5,6 +5,7 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
@@ -31,7 +32,7 @@
         <HBox>
             <children>
 
-                <VBox fx:id="buttonsContainer" prefHeight="325.0" prefWidth="140.0" style="-fx-background-color: transparent;">
+                <VBox prefWidth="160.0" style="-fx-background-color: transparent;">
                    <children>
                       <VBox alignment="TOP_CENTER" spacing="8.0" style="-fx-background-color: #2E2E2E; -fx-padding: 15; -fx-background-radius: 5;">
                          <children>
@@ -51,6 +52,11 @@
                             <Button fx:id="buttonChangePhoto" mnemonicParsing="false" onAction="#handleChangePhoto" text="Upload Photo" style="-fx-background-color: #555555; -fx-text-fill: white; -fx-font-size: 10px;" />
                          </children>
                       </VBox>
+                      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+                         <content>
+                            <VBox fx:id="buttonsContainer" spacing="6.0" style="-fx-background-color: transparent;" />
+                         </content>
+                      </ScrollPane>
                    </children>
                    <HBox.margin>
                       <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
@@ -67,8 +73,8 @@
             </HBox.margin>
         </HBox>
 
-        <!-- Profile Selection Row -->
-        <HBox alignment="CENTER_LEFT" style="-fx-border-color: black;" GridPane.rowIndex="1">
+        <!-- Profile Selection Row (hidden) -->
+        <HBox alignment="CENTER_LEFT" style="-fx-border-color: black;" GridPane.rowIndex="1" visible="false" managed="false">
             <GridPane.margin>
                 <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
             </GridPane.margin>

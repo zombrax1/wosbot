@@ -211,7 +211,7 @@ public class ProfileManagerActionController implements IProfileStatusChangeListe
 
 			Parent root = loader.load();
 			Scene scene = new Scene(root);
-			scene.getStylesheets().add(ILauncherConstants.getCssPath());
+            scene.getStylesheets().add(ILauncherConstants.getCssPath());
 
 			newProfileStage = new Stage();
 			newProfileStage.setTitle("New Profile");
@@ -280,7 +280,7 @@ public class ProfileManagerActionController implements IProfileStatusChangeListe
 
 			// Create scene and apply CSS
 			Scene scene = new Scene(root);
-			scene.getStylesheets().add(ILauncherConstants.getCssPath());
+            scene.getStylesheets().add(ILauncherConstants.getCssPath());
 
                         dialogStage.setScene(scene);
                         dialogStage.initModality(Modality.WINDOW_MODAL);
@@ -347,7 +347,7 @@ public class ProfileManagerActionController implements IProfileStatusChangeListe
 
 			// Create scene and apply CSS
 			Scene scene = new Scene(root);
-			scene.getStylesheets().add(ILauncherConstants.getCssPath());
+            scene.getStylesheets().add(ILauncherConstants.getCssPath());
 
                         dialogStage.setScene(scene);
                         dialogStage.initModality(Modality.WINDOW_MODAL);

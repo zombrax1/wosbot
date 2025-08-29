@@ -31,6 +31,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.stage.FileChooser;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -294,6 +295,39 @@ public class ProfileManagerLayoutController implements IProfileChangeObserver {
 	@FXML
 	void handleButtonBulkUpdateProfiles(ActionEvent event) {
 		profileManagerActionController.showBulkUpdateDialog(loadedProfileId, profiles, btnBulkUpdate);
+	}
+
+	@FXML
+	void handleButtonExportProfiles(ActionEvent event) {
+		FileChooser chooser = new FileChooser();
+		chooser.setTitle("Export Profiles");
+		chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON", "*.json"));
+		java.io.File file = chooser.showSaveDialog(null);
+		if (file != null) {
+			boolean ok = profileManagerActionController.exportProfiles(file);
+			Alert alert = new Alert(ok ? Alert.AlertType.INFORMATION : Alert.AlertType.ERROR);
+			alert.setTitle(ok ? "SUCCESS EXPORT" : "ERROR EXPORT");
+			alert.setHeaderText(null);
+			alert.setContentText(ok ? "Profiles exported successfully." : "Failed to export profiles.");
+			alert.showAndWait();
+		}
+	}
+
+	@FXML
+	void handleButtonImportProfiles(ActionEvent event) {
+		FileChooser chooser = new FileChooser();
+		chooser.setTitle("Import Profiles");
+		chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON", "*.json"));
+		java.io.File file = chooser.showOpenDialog(null);
+		if (file != null) {
+			boolean ok = profileManagerActionController.importProfiles(file);
+			Alert alert = new Alert(ok ? Alert.AlertType.INFORMATION : Alert.AlertType.ERROR);
+			alert.setTitle(ok ? "SUCCESS IMPORT" : "ERROR IMPORT");
+			alert.setHeaderText(null);
+			alert.setContentText(ok ? "Profiles imported successfully." : "Failed to import profiles.");
+			alert.showAndWait();
+			loadProfiles();
+		}
 	}
 
 	public void loadProfiles() {
