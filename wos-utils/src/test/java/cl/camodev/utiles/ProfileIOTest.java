@@ -16,7 +16,7 @@ class ProfileIOTest {
 
     @Test
     void writeAndReadProfiles() throws Exception {
-        DTOProfiles profile = new DTOProfiles(1L, "test", "1", true);
+        DTOProfiles profile = new DTOProfiles(1L, "test", "1", true, 0L, 30L);
         profile.getConfigs().add(new DTOConfig(1L, "KEY", "value"));
         List<DTOProfiles> profiles = List.of(profile);
 

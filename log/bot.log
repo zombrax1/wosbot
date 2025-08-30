@@ -1,0 +1,22 @@
+2025-08-29 10:18:25 [INFO ] c.c.w.m.Main         - Starting WosBot application
+2025-08-29 10:18:38 [WARN ] c.z.h.h.HikariConnectionProvider - com.zaxxer.hikari.hibernate.HikariConnectionProvider has been deprecated for versions of Hibernate 4.3.6 and newer.  Please switch to org.hibernate.hikaricp.internal.HikariCPConnectionProvider.
+2025-08-29 10:18:39 [INFO ] c.z.h.HikariDataSource - HikariPool-1 - Starting...
+2025-08-29 10:18:40 [INFO ] c.z.h.p.HikariPool   - HikariPool-1 - Added connection org.sqlite.jdbc4.JDBC4Connection@14b76b43
+2025-08-29 10:18:40 [INFO ] c.z.h.HikariDataSource - HikariPool-1 - Start completed.
+2025-08-29 10:18:49 [WARN ] c.z.h.h.HikariConnectionProvider - com.zaxxer.hikari.hibernate.HikariConnectionProvider has been deprecated for versions of Hibernate 4.3.6 and newer.  Please switch to org.hibernate.hikaricp.internal.HikariCPConnectionProvider.
+2025-08-29 10:18:49 [INFO ] c.z.h.HikariDataSource - HikariPool-2 - Starting...
+2025-08-29 10:18:49 [INFO ] c.z.h.p.HikariPool   - HikariPool-2 - Added connection org.sqlite.jdbc4.JDBC4Connection@571a725d
+2025-08-29 10:18:49 [INFO ] c.z.h.HikariDataSource - HikariPool-2 - Start completed.
+2025-08-29 10:18:55 [INFO ] c.c.u.ImageSearchUtil - Caching templates...
+2025-08-29 10:18:58 [INFO ] c.c.u.ImageSearchUtil - Native library loaded from: D:\google\21-7\17\wosbot\lib\opencv\opencv_java4110.dll
+2025-08-29 12:38:28 [INFO ] c.c.w.m.Main         - Starting WosBot application
+2025-08-29 12:38:44 [WARN ] c.z.h.h.HikariConnectionProvider - com.zaxxer.hikari.hibernate.HikariConnectionProvider has been deprecated for versions of Hibernate 4.3.6 and newer.  Please switch to org.hibernate.hikaricp.internal.HikariCPConnectionProvider.
+2025-08-29 12:38:44 [INFO ] c.z.h.HikariDataSource - HikariPool-1 - Starting...
+2025-08-29 12:38:46 [INFO ] c.z.h.p.HikariPool   - HikariPool-1 - Added connection org.sqlite.jdbc4.JDBC4Connection@643b4789
+2025-08-29 12:38:46 [INFO ] c.z.h.HikariDataSource - HikariPool-1 - Start completed.
+2025-08-29 12:38:52 [WARN ] c.z.h.h.HikariConnectionProvider - com.zaxxer.hikari.hibernate.HikariConnectionProvider has been deprecated for versions of Hibernate 4.3.6 and newer.  Please switch to org.hibernate.hikaricp.internal.HikariCPConnectionProvider.
+2025-08-29 12:38:52 [INFO ] c.z.h.HikariDataSource - HikariPool-2 - Starting...
+2025-08-29 12:38:52 [INFO ] c.z.h.p.HikariPool   - HikariPool-2 - Added connection org.sqlite.jdbc4.JDBC4Connection@58045dfc
+2025-08-29 12:38:52 [INFO ] c.z.h.HikariDataSource - HikariPool-2 - Start completed.
+2025-08-29 12:38:59 [INFO ] c.c.u.ImageSearchUtil - Caching templates...
+2025-08-29 12:39:02 [INFO ] c.c.u.ImageSearchUtil - Native library loaded from: D:\google\21-7\17\wosbot\lib\opencv\opencv_java4110.dll

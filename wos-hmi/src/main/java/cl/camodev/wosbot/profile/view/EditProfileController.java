@@ -1,30 +1,23 @@
 package cl.camodev.wosbot.profile.view;
 
-import cl.camodev.wosbot.console.enumerable.EnumConfigurationKey;
 import cl.camodev.wosbot.console.enumerable.EnumTpMessageSeverity;
 import cl.camodev.wosbot.profile.controller.ProfileManagerActionController;
 import cl.camodev.wosbot.profile.model.ProfileAux;
 import cl.camodev.wosbot.serv.impl.ServLogs;
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.scene.shape.Circle;
 
 import java.net.URL;
-import java.io.File;
 import java.util.ResourceBundle;
 
 public class EditProfileController implements Initializable {
-
-    private static final double PROFILE_IMAGE_SIZE = 128.0;
 
     @FXML
     private TextField txtProfileName;
@@ -36,13 +29,19 @@ public class EditProfileController implements Initializable {
     private CheckBox chkEnabled;
 
     @FXML
+    private Slider sliderPriority;
+
+    @FXML
+    private Label lblPriorityValue;
+
+    @FXML
     private Button btnSave;
 
     @FXML
     private Button btnCancel;
 
     @FXML
-    private ImageView imageProfile;
+    private TextField txtReconnectionTime;
 
     private ProfileAux profileToEdit;
     private ProfileManagerActionController actionController;
@@ -65,10 +64,18 @@ public class EditProfileController implements Initializable {
             }
         });
 
-        imageProfile.setFitHeight(PROFILE_IMAGE_SIZE);
-        imageProfile.setFitWidth(PROFILE_IMAGE_SIZE);
-        imageProfile.setClip(new Circle(PROFILE_IMAGE_SIZE / 2, PROFILE_IMAGE_SIZE / 2, PROFILE_IMAGE_SIZE / 2));
-        imageProfile.setImage(null);
+        // Add input validation to reconnection time field - only allow numbers
+        txtReconnectionTime.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*")) {
+                txtReconnectionTime.setText(newValue.replaceAll("[^\\d]", ""));
+            }
+        });
+
+        // Configurar el slider de prioridad
+        sliderPriority.valueProperty().addListener((observable, oldValue, newValue) -> {
+            int priorityValue = newValue.intValue();
+            lblPriorityValue.setText(String.valueOf(priorityValue));
+        });
     }
 
     public void setProfileToEdit(ProfileAux profile) {
@@ -93,14 +100,9 @@ public class EditProfileController implements Initializable {
             txtProfileName.setText(profileToEdit.getName());
             txtEmulatorNumber.setText(profileToEdit.getEmulatorNumber());
             chkEnabled.setSelected(profileToEdit.isEnabled());
-
-            String photoPath = profileToEdit.getConfig(EnumConfigurationKey.PROFILE_IMAGE_PATH_STRING, String.class);
-            if (photoPath != null && !photoPath.trim().isEmpty()) {
-                File photoFile = new File(photoPath);
-                if (photoFile.exists()) {
-                    loadImageAsync(photoFile);
-                }
-            }
+            sliderPriority.setValue(profileToEdit.getPriority().doubleValue());
+            lblPriorityValue.setText(String.valueOf(profileToEdit.getPriority()));
+            txtReconnectionTime.setText(String.valueOf(profileToEdit.getReconnectionTime()));
         }
     }
 
@@ -111,6 +113,11 @@ public class EditProfileController implements Initializable {
             profileToEdit.setName(txtProfileName.getText());
             profileToEdit.setEmulatorNumber(txtEmulatorNumber.getText());
             profileToEdit.setEnabled(chkEnabled.isSelected());
+            profileToEdit.setPriority((long) sliderPriority.getValue());
+
+            // Update reconnection time
+            long reconnectionTime = Long.parseLong(txtReconnectionTime.getText().isEmpty() ? "0" : txtReconnectionTime.getText());
+            profileToEdit.setReconnectionTime(reconnectionTime);
 
             // Save to database
             boolean success = actionController.saveProfile(profileToEdit);
@@ -173,7 +180,22 @@ public class EditProfileController implements Initializable {
             }
         }
 
-        if (errorMessage.length() > 0) {
+        // Validate reconnection time
+        if (txtReconnectionTime.getText() == null || txtReconnectionTime.getText().trim().isEmpty()) {
+            errorMessage.append("Reconnection time cannot be empty.\n");
+        } else {
+            String reconnectionTimeText = txtReconnectionTime.getText().trim();
+            try {
+                long reconnectionTime = Long.parseLong(reconnectionTimeText);
+                if (reconnectionTime < 0) {
+                    errorMessage.append("Reconnection time must be a non-negative number (0 or greater).\n");
+                }
+            } catch (NumberFormatException e) {
+                errorMessage.append("Reconnection time must be a valid number.\n");
+            }
+        }
+
+        if (!errorMessage.isEmpty()) {
             // Show validation error
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Invalid Input");
@@ -184,31 +206,5 @@ public class EditProfileController implements Initializable {
         }
 
         return true;
-    }
-
-    @FXML
-    private void handleInsertPhoto() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select Profile Photo");
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG Images", "*.png"));
-        File selectedFile = fileChooser.showOpenDialog(dialogStage);
-        if (selectedFile != null) {
-            loadImageAsync(selectedFile);
-            if (profileToEdit != null) {
-                profileToEdit.setConfig(EnumConfigurationKey.PROFILE_IMAGE_PATH_STRING, selectedFile.getAbsolutePath());
-            }
-        }
-    }
-
-    private void loadImageAsync(File file) {
-        imageProfile.setImage(null);
-        Task<Image> loadTask = new Task<>() {
-            @Override
-            protected Image call() {
-                return new Image(file.toURI().toString(), PROFILE_IMAGE_SIZE, PROFILE_IMAGE_SIZE, true, true);
-            }
-        };
-        loadTask.setOnSucceeded(e -> imageProfile.setImage(loadTask.getValue()));
-        new Thread(loadTask, "ProfileEditorImageLoader").start();
     }
 }

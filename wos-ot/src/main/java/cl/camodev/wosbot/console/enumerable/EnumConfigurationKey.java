@@ -37,6 +37,7 @@ public enum EnumConfigurationKey {
 
 	ALLIANCE_CHESTS_BOOL("false",Boolean.class),
 	ALLIANCE_CHESTS_OFFSET_INT("60",Integer.class),
+	ALLIANCE_HONOR_CHEST_BOOL("false",Boolean.class),
 	ALLIANCE_TECH_BOOL("false",Boolean.class),
 	ALLIANCE_TECH_OFFSET_INT("60",Integer.class),
 	ALLIANCE_AUTOJOIN_BOOL("false",Boolean.class),
@@ -57,6 +58,7 @@ public enum EnumConfigurationKey {
 	GATHER_MEAT_LEVEL_INT("1",Integer.class),
 	GATHER_IRON_LEVEL_INT("1",Integer.class),
 	GATHER_ACTIVE_MARCH_QUEUE_INT("6",Integer.class),
+    GATHER_REMOVE_HEROS_BOOL("false",Boolean.class),
 	
 	INTEL_BOOL("false",Boolean.class),
 	INTEL_FIRE_BEAST_BOOL("false",Boolean.class),
@@ -64,6 +66,8 @@ public enum EnumConfigurationKey {
 	INTEL_CAMP_BOOL("false",Boolean.class),
 	INTEL_EXPLORATION_BOOL("false",Boolean.class),
 	INTEL_BEASTS_EVENT_BOOL("false",Boolean.class),
+	INTEL_BEASTS_FLAG_INT("1", Integer.class),
+	INTEL_USE_FLAG_BOOL("false", Boolean.class),
 	INTEL_FC_ERA_BOOL("false",Boolean.class),
 	
 	LIFE_ESSENCE_BOOL("false",Boolean.class),
@@ -79,7 +83,6 @@ public enum EnumConfigurationKey {
 	DAILY_MISSION_AUTO_SCHEDULE_BOOL("false",Boolean.class),
 	
 	STOREHOUSE_CHEST_BOOL("false",Boolean.class),
-	STOREHOUSE_STAMINA_BOOL("false",Boolean.class),
 
 	PET_SKILL_STAMINA_BOOL("false",Boolean.class),
 	PET_SKILL_FOOD_BOOL("false",Boolean.class),
@@ -91,9 +94,16 @@ public enum EnumConfigurationKey {
 	
 	BOOL_BANK("false",Boolean.class),
 	INT_BANK_DELAY("1",Integer.class),
-        BOOL_MYSTERY_SHOP("false",Boolean.class),
-        PROFILE_IMAGE_PATH_STRING("", String.class),
-        ;
+	BOOL_MYSTERY_SHOP("false",Boolean.class),
+
+	TUNDRA_TRUCK_EVENT_BOOL("false",Boolean.class),
+	TUNDRA_TRUCK_USE_GEMS_BOOL("false",Boolean.class),
+	TUNDRA_TRUCK_SSR_BOOL("false",Boolean.class),
+	MERCENARY_EVENT_BOOL("false",Boolean.class),
+	HERO_MISSION_EVENT_BOOL("false",Boolean.class),
+
+	TUNDRA_TREK_SUPPLIES_BOOL("false",Boolean.class),
+	;
 	//@formatter:on
     private final String defaultValue;
     private final Class<?> type;
@@ -112,7 +122,7 @@ public enum EnumConfigurationKey {
     }
 
     /**
-     * Método que convierte un String al tipo definido en 'type'. Agrega conversiones según los tipos que necesites.
+     * Method that converts a String to the type defined in 'type'. Add conversions according to the types you need..
      */
     @SuppressWarnings("unchecked")
     public <T> T castValue(String value) {
@@ -125,7 +135,7 @@ public enum EnumConfigurationKey {
         } else if (type.equals(String.class)) {
             return (T) value;
         }
-        // Agrega otros if/else según los tipos soportados
-        throw new UnsupportedOperationException("Tipo " + type.getSimpleName() + " no soportado");
+        // Add other if/else according to the supported types
+        throw new UnsupportedOperationException("Type " + type.getSimpleName() + " not supported for casting.");
     }
 }

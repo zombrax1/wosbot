@@ -47,8 +47,8 @@ public class FXApp extends Application {
 		Parent root = fxmlLoader.load();
 
 		// Crear escena con tamaño por defecto primero
-		Scene scene = new Scene(root, DEFAULT_W, DEFAULT_H);
-		scene.getStylesheets().add(ILauncherConstants.getCssPath());
+        Scene scene = new Scene(root, DEFAULT_W, DEFAULT_H);
+        scene.getStylesheets().add(ILauncherConstants.getCssPath());
 		stage.setScene(scene);
 		stage.getIcons().add(appIcon);
 		stage.setTitle("Launcher");

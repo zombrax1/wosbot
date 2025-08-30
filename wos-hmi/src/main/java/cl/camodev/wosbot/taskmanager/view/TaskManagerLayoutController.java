@@ -136,8 +136,8 @@ public class TaskManagerLayoutController {
 				for (DTOProfiles profile : dtoProfiles) {
 
 					Tab existing = profileTabsMap.get(profile.getId());
-                                        if (existing == null) {
-                                                // New profile → create tab
+					if (existing == null) {
+						// Nuevo perfil → crea tab
 						Tab newTab = createProfileTab(profile);
 						profileTabsMap.put(profile.getId(), newTab);
 						tabPaneProfiles.getTabs().add(newTab);
@@ -160,10 +160,10 @@ public class TaskManagerLayoutController {
 		tab.setClosable(false);
 		tab.setUserData(profile.getId());
 
-                // 1) Prepare the table and empty observable list
+		// 1) Prepara la tabla y la lista observable vacía
 		ObservableList<TaskManagerAux> dataList = FXCollections.observableArrayList();
 
-                // 2) Create FilteredList for filtering
+		// 2) Crea FilteredList para el filtrado
 		FilteredList<TaskManagerAux> filteredList = new FilteredList<>(dataList);
 
 		TableView<TaskManagerAux> table = createTaskTable();
@@ -174,7 +174,7 @@ public class TaskManagerLayoutController {
 		filteredTasks.put(profile.getId(), filteredList);
 		tab.setContent(table);
 
-                // 3) Call the async builder and update the table when ready
+		// 3) Llama al builder asíncrono y actualiza la tabla cuando esté listo
 		buildTaskManagerList(profile, list -> {
 			// Siempre desde JavaFX Application Thread
 			dataList.setAll(list);
@@ -198,14 +198,14 @@ public class TaskManagerLayoutController {
 //		dataList.setAll(updated);
 //	}
 
-        /**
-         * Reloads task status and, when available, builds the TaskManagerAux list and provides it to the consumer.
-         */
+	/**
+	 * Recarga el estado de las tareas y, cuando estén disponibles, construye la lista de TaskManagerAux y la entrega al consumidor.
+	 */
 	private void buildTaskManagerList(DTOProfiles profile, Consumer<List<TaskManagerAux>> onListReady) {
 		// Ahora `statuses` es una List<DTODailyTaskStatus>
 		taskManagerActionController.loadDailyTaskStatus(profile.getId(), (List<DTODailyTaskStatus> statuses) -> {
 			List<TaskManagerAux> list = Arrays.stream(TpDailyTaskEnum.values()).map(task -> {
-                                // Find the status whose ID matches the task ID
+				// Busca el status cuyo ID coincida con el ID de la tarea
 //				System.out.println(">>> statuses.size=" + statuses.size() + "  buscando id=" + task.getId());
 
 				DTODailyTaskStatus s = statuses.stream().filter(st -> st.getIdTpDailyTask() == task.getId()) // o st.getTaskId()
@@ -257,7 +257,7 @@ public class TaskManagerLayoutController {
 			private final ImageView imageView = new ImageView();
 
 			{
-                                // Adjust icon size if needed
+				// Ajusta tamaño del icono si es necesario
 				imageView.setFitWidth(16);
 				imageView.setFitHeight(16);
 			}
@@ -271,10 +271,10 @@ public class TaskManagerLayoutController {
 					setStyle("");
 				} else {
 					setText(item);
-                                        // Get the object of the current row
+					// Obtén el objeto de la fila actual
 					TaskManagerAux task = getTableRow().getItem();
 					if (task != null) {
-                                                // Choose the icon based on the boolean property
+						// Elige el icono según la propiedad booleana
 						boolean flag = task.scheduledProperty().get();
 						imageView.setImage(flag ? iconTrue : iconFalse);
 						setGraphic(imageView);
@@ -395,7 +395,7 @@ public class TaskManagerLayoutController {
 		});
 
 		TableColumn<TaskManagerAux, Void> colActions = new TableColumn<>("Actions");
-                colActions.setPrefWidth(250); // Increase width to accommodate the third button
+		colActions.setPrefWidth(250); // Aumentar el ancho para acomodar el tercer botón
 		colActions.setCellFactory(column -> new TableCell<>() {
 			private final Button btnSchedule = new Button("Schedule");
 			private final Button btnRemove = new Button("Remove");
@@ -507,52 +507,42 @@ public class TaskManagerLayoutController {
 			}
 		});
 
-		table.getColumns().addAll(colTaskName, colLastExecution, colNextExecution, colActions);
-		table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+		table.getColumns().add(colTaskName);
+		table.getColumns().add(colLastExecution);
+		table.getColumns().add(colNextExecution);
+		table.getColumns().add(colActions);
+		table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
 		return table;
 	}
 
-        public void updateTaskStatus(Long profileId, int taskNameId, DTOTaskState taskState) {
-                Platform.runLater(() -> {
-                        ObservableList<TaskManagerAux> dataList = tasks.get(profileId);
-                        if (dataList == null)
-                                return;
-                       TaskManagerAux taskAux = dataList.stream()
-                                       .filter(aux -> aux.getTaskEnum().getId() == taskNameId)
-                                       .findFirst()
-                                       .orElseGet(() -> {
-                                               TpDailyTaskEnum enumMatch = Arrays.stream(TpDailyTaskEnum.values())
-                                                               .filter(e -> e.getId() == taskNameId)
-                                                               .findFirst()
-                                                               .orElse(null);
-                                               if (enumMatch == null) {
-                                                       return null;
-                                               }
-                                               TaskManagerAux newTask = new TaskManagerAux(enumMatch.getName(), null, null, enumMatch, profileId, Long.MAX_VALUE, false, false, false);
-                                               dataList.add(newTask);
-                                               return newTask;
-                                       });
-                       if (taskAux == null)
-                               return;
+	public void updateTaskStatus(Long profileId, int taskNameId, DTOTaskState taskState) {
+		Platform.runLater(() -> {
+			ObservableList<TaskManagerAux> dataList = tasks.get(profileId);
+			if (dataList == null)
+				return;
+			Optional<TaskManagerAux> optionalTask = dataList.stream().filter(aux -> aux.getTaskEnum().getId() == taskNameId).findFirst();
+			if (!optionalTask.isPresent())
+				return;
 
-                       Tab t = profileTabsMap.get(profileId);
-                       boolean hasQueue = ServScheduler
-                                       .getServices()
-                                       .getQueueManager()
-                                       .getQueue(profileId) != null;
+			Tab t = profileTabsMap.get(profileId);
+			boolean hasQueue = ServScheduler
+					.getServices()
+					.getQueueManager()
+					.getQueue(profileId) != null;
 
-                       ImageView iv = new ImageView(hasQueue ? iconTrue : iconFalse);
+			ImageView iv = new ImageView(hasQueue ? iconTrue : iconFalse);
 
-                       iv.setFitWidth(16);
-                       iv.setFitHeight(16);
+			iv.setFitWidth(16);
+			iv.setFitHeight(16);
 
-                       t.setGraphic(iv);
-                        taskAux.setLastExecution(taskState.getLastExecutionTime());
-                        taskAux.setNextExecution(taskState.getNextExecutionTime());
-                        taskAux.setScheduled(taskState.isScheduled());
-                        taskAux.setExecuting(taskState.isExecuting());
-                        taskAux.setHasReadyTask(taskState.getNextExecutionTime() != null && ChronoUnit.SECONDS.between(LocalDateTime.now(), taskState.getNextExecutionTime()) <= 0);
+			t.setGraphic(iv);
+			TaskManagerAux taskAux = optionalTask.get();
+			taskAux.setLastExecution(taskState.getLastExecutionTime());
+			taskAux.setNextExecution(taskState.getNextExecutionTime());
+			taskAux.setScheduled(taskState.isScheduled());
+			taskAux.setExecuting(taskState.isExecuting());
+			taskAux.setHasReadyTask(taskState.getNextExecutionTime() != null && ChronoUnit.SECONDS.between(LocalDateTime.now(), taskState.getNextExecutionTime()) <= 0);
 			taskAux.setNearestMinutesUntilExecution(taskState.getNextExecutionTime() != null ? ChronoUnit.SECONDS.between(LocalDateTime.now(), taskState.getNextExecutionTime()) : Long.MAX_VALUE);
 
 			FXCollections.sort(dataList, TASK_AUX_COMPARATOR);
