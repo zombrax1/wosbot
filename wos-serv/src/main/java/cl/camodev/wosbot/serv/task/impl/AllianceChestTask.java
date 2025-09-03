@@ -12,9 +12,11 @@ import cl.camodev.wosbot.serv.task.DelayedTask;
 
 public class AllianceChestTask extends DelayedTask {
 
-	public AllianceChestTask(DTOProfiles profile, TpDailyTaskEnum tpDailyTask) {
-		super(profile, tpDailyTask);
-	}
+        protected static final int MAX_CLAIM_ATTEMPTS = 5;
+
+        public AllianceChestTask(DTOProfiles profile, TpDailyTaskEnum tpDailyTask) {
+                super(profile, tpDailyTask);
+        }
 
 	@Override
 	protected void execute() {
@@ -65,27 +67,32 @@ public class AllianceChestTask extends DelayedTask {
 		// Search for the claim rewards button
 		DTOImageSearchResult claimAllButtonGifts = emuManager.searchTemplate(EMULATOR_NUMBER,
 		EnumTemplates.ALLIANCE_CHEST_CLAIM_ALL_BUTTON.getTemplate(), 98);
-		if (claimAllButtonGifts.isFound()) {
-			emuManager.tapAtRandomPoint(EMULATOR_NUMBER, claimAllButtonGifts.getPoint(),
-			claimAllButtonGifts.getPoint(),
-			2, 500);
-			sleepTask(500);
-			
-			// Close the window
-			emuManager.tapAtRandomPoint(EMULATOR_NUMBER, new DTOPoint(578, 1180), new DTOPoint(641, 1200), 2, 500);
-		} else {
-			while (true) {
-				DTOImageSearchResult claimButton = emuManager.searchTemplate(EMULATOR_NUMBER,
-				EnumTemplates.ALLIANCE_CHEST_CLAIM_BUTTON.getTemplate(), 90);
-				if (claimButton.isFound()) {
-					emuManager.tapAtRandomPoint(EMULATOR_NUMBER, claimButton.getPoint(), claimButton.getPoint(), 1,
-					500);
-					sleepTask(500);
-				} else {
-					break;
-				}
-			}
-		}
+                if (claimAllButtonGifts.isFound()) {
+                        emuManager.tapAtRandomPoint(EMULATOR_NUMBER, claimAllButtonGifts.getPoint(),
+                        claimAllButtonGifts.getPoint(),
+                        2, 500);
+                        sleepTask(500);
+
+                        // Close the window
+                        emuManager.tapAtRandomPoint(EMULATOR_NUMBER, new DTOPoint(578, 1180), new DTOPoint(641, 1200), 2, 500);
+                } else {
+                        int claimAttempts = 0;
+                        while (claimAttempts < MAX_CLAIM_ATTEMPTS) {
+                                DTOImageSearchResult claimButton = emuManager.searchTemplate(EMULATOR_NUMBER,
+                                EnumTemplates.ALLIANCE_CHEST_CLAIM_BUTTON.getTemplate(), 90);
+                                if (claimButton.isFound()) {
+                                        emuManager.tapAtRandomPoint(EMULATOR_NUMBER, claimButton.getPoint(), claimButton.getPoint(), 1,
+                                        500);
+                                        sleepTask(500);
+                                        claimAttempts++;
+                                } else {
+                                        break;
+                                }
+                        }
+                        if (claimAttempts == MAX_CLAIM_ATTEMPTS) {
+                                logWarning("Maximum alliance gift claim attempts reached");
+                        }
+                }
 		sleepTask(500);
 
 		// Check if honor chest is to be claimed

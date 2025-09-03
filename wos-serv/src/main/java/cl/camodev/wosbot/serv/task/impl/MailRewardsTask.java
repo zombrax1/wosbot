@@ -15,7 +15,9 @@ import cl.camodev.wosbot.serv.task.DelayedTask;
 
 public class MailRewardsTask extends DelayedTask {
 
-	private final DTOPoint[] buttons = { new DTOPoint(230, 120), new DTOPoint(360, 120), new DTOPoint(500, 120) };
+        protected static final int MAX_MAIL_SEARCH_ATTEMPTS = 5;
+
+        private final DTOPoint[] buttons = { new DTOPoint(230, 120), new DTOPoint(360, 120), new DTOPoint(500, 120) };
 
 	public MailRewardsTask(DTOProfiles profile, TpDailyTaskEnum tpTask) {
 		super(profile, tpTask);
@@ -45,39 +47,38 @@ public class MailRewardsTask extends DelayedTask {
 						new DTOPoint(450, 1250), 2, 500);
 				sleepTask(500);
 
-				// Check if there are excess unread mail
-				int searchAttempts = 0;
-				while (true) {
-					DTOImageSearchResult unclaimedRewards = emuManager.searchTemplate(EMULATOR_NUMBER,
-							EnumTemplates.MAIL_UNCLAIMED_REWARDS.getTemplate(), 90);
-					if (unclaimedRewards.isFound()) {
-						
-						if(searchAttempts > 0) {
-							logInfo("Excess unread mail found, swiping down and claiming");
-							
-							// Swipe down 10 times
-							for (int i = 0; i < 10; i++) {
-								emuManager.executeSwipe(EMULATOR_NUMBER, new DTOPoint(40, 913), new DTOPoint(40, 400));
-								sleepTask(300);
-							}
-						}
-
-						// Claim rewards
-						emuManager.tapAtRandomPoint(EMULATOR_NUMBER, new DTOPoint(420, 1227),
-								new DTOPoint(450, 1250), 3, 1000);
-						sleepTask(500);
-
-						searchAttempts++;
-					} else {
-						break;
-					}
-					sleepTask(500);
-				}
+                               // Check if there are excess unread mail
+                               int searchAttempts = 0;
+                               while (searchAttempts < MAX_MAIL_SEARCH_ATTEMPTS) {
+                                       DTOImageSearchResult unclaimedRewards = emuManager.searchTemplate(EMULATOR_NUMBER,
+                                                       EnumTemplates.MAIL_UNCLAIMED_REWARDS.getTemplate(), 90);
+                                       if (unclaimedRewards.isFound()) {
+                                               if (searchAttempts > 0) {
+                                                       logInfo("Excess unread mail found, swiping down and claiming");
+                                                       // Swipe down 10 times
+                                                       for (int i = 0; i < 10; i++) {
+                                                               emuManager.executeSwipe(EMULATOR_NUMBER, new DTOPoint(40, 913), new DTOPoint(40, 400));
+                                                               sleepTask(300);
+                                                       }
+                                               }
+                                               // Claim rewards
+                                               emuManager.tapAtRandomPoint(EMULATOR_NUMBER, new DTOPoint(420, 1227),
+                                                               new DTOPoint(450, 1250), 3, 1000);
+                                               sleepTask(500);
+                                               searchAttempts++;
+                                       } else {
+                                               break;
+                                       }
+                                       sleepTask(500);
+                               }
+                               if (searchAttempts == MAX_MAIL_SEARCH_ATTEMPTS) {
+                                       logWarning("Maximum mail claim attempts reached");
+                               }
 			}
 			LocalDateTime nextSchedule = LocalDateTime.now()
 					.plusMinutes(profile.getConfig(EnumConfigurationKey.MAIL_REWARDS_OFFSET_INT, Integer.class));
 			this.reschedule(nextSchedule);
-			ServScheduler.getServices().updateDailyTaskStatus(profile, tpTask, nextSchedule);
+                        servScheduler.updateDailyTaskStatus(profile, tpTask, nextSchedule);
 			emuManager.tapBackButton(EMULATOR_NUMBER);
 
 		} else {
