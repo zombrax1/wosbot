@@ -103,20 +103,37 @@ public class TaskManagerActionController implements ITaskStatusChangeListener {
 		return task.scheduledProperty().get() && !task.executingProperty().get();
 	}
 
-	/**
-	 * Handles the execute now action
-	 */
-	public void executeTaskNow(TaskManagerAux task) {
-		DTOProfiles profile = findProfileById(task.getProfileId());
-		if (profile == null) {
-			System.err.println("Profile not found: " + task.getProfileId());
-			return;
-		}
+    /**
+     * Handles the execute now action
+     */
+    public void executeTaskNow(TaskManagerAux task) {
+        DTOProfiles profile = findProfileById(task.getProfileId());
+        if (profile == null) {
+            System.err.println("Profile not found: " + task.getProfileId());
+            return;
+        }
 
-		ServScheduler scheduler = ServScheduler.getServices();
-		scheduler.updateDailyTaskStatus(profile, task.getTaskEnum(), LocalDateTime.now());
-		scheduler.getQueueManager().getQueue(profile.getId()).executeTaskNow(task.getTaskEnum());
-	}
+        ServScheduler scheduler = ServScheduler.getServices();
+        TaskQueue queue = scheduler.getQueueManager().getQueue(profile.getId());
+        if (queue == null) {
+            System.err.println("No active queue found for profile: " + profile.getName());
+            return;
+        }
+
+        // If the user has the task ticked (scheduled), execute now AND keep it recurring
+        if (task.scheduledProperty().get()) {
+            scheduler.updateDailyTaskStatus(profile, task.getTaskEnum(), LocalDateTime.now());
+            scheduleTaskInQueue(queue, task.getTaskEnum(), LocalDateTime.now(), true, profile);
+            ServLogs.getServices().appendLog(EnumTpMessageSeverity.INFO, "TaskExecutor", profile.getName(),
+                    "Executed scheduled task " + task.getTaskEnum().getName() + " and marked as recurring");
+        } else {
+            // Not ticked: execute once
+            scheduler.updateDailyTaskStatus(profile, task.getTaskEnum(), LocalDateTime.now());
+            queue.executeTaskNow(task.getTaskEnum());
+            ServLogs.getServices().appendLog(EnumTpMessageSeverity.INFO, "TaskExecutor", profile.getName(),
+                    "Executed task " + task.getTaskEnum().getName() + " one time");
+        }
+    }
 
 	/**
 	 * Executes a task directly without asking anything.
